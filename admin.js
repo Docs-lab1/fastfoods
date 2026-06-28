@@ -1,21 +1,37 @@
-import { supabaseClient } from './config.js';
+// ============================================
+// CHIKORLANDO - ADMIN DASHBOARD
+// ============================================
 
 // Check if user is admin
 async function checkAdminAuth() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) {
-        window.location.href = 'index.html';
-        return;
-    }
-    
-    // Check user role
-    const { data } = await supabaseClient
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+    try {
+        const supabase = window.supabaseClient;
+        if (!supabase) {
+            console.error('Supabase not initialized');
+            window.location.href = 'index.html';
+            return;
+        }
         
-    if (!data || data.role !== 'admin') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        // Check user role
+        const { data } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+            
+        if (!data || data.role !== 'admin') {
+            window.location.href = 'index.html';
+        } else {
+            console.log('✅ Admin logged in:', user.email);
+        }
+    } catch (error) {
+        console.error('Auth error:', error);
         window.location.href = 'index.html';
     }
 }
@@ -23,17 +39,25 @@ async function checkAdminAuth() {
 // Load orders
 async function loadOrders() {
     try {
-        const { data, error } = await supabaseClient
+        const supabase = window.supabaseClient;
+        if (!supabase) return;
+        
+        const { data, error } = await supabase
             .from('orders')
             .select('*')
             .order('created_at', { ascending: false });
             
         if (error) throw error;
         
-        updateStats(data);
-        displayOrders(data);
+        updateStats(data || []);
+        displayOrders(data || []);
     } catch (error) {
         console.error('Error loading orders:', error);
+        document.getElementById('ordersList').innerHTML = `
+            <p style="text-align: center; color: #f44336; padding: 20px;">
+                <i class="fas fa-exclamation-circle"></i> Error loading orders
+            </p>
+        `;
     }
 }
 
@@ -43,30 +67,39 @@ function updateStats(orders) {
     const pending = orders.filter(o => o.status === 'pending' || o.status === 'preparing').length;
     const completed = orders.filter(o => o.status === 'delivered').length;
     
-    document.getElementById('totalOrders').textContent = total;
-    document.getElementById('pendingOrders').textContent = pending;
-    document.getElementById('completedOrders').textContent = completed;
+    const totalEl = document.getElementById('totalOrders');
+    const pendingEl = document.getElementById('pendingOrders');
+    const completedEl = document.getElementById('completedOrders');
+    
+    if (totalEl) totalEl.textContent = total;
+    if (pendingEl) pendingEl.textContent = pending;
+    if (completedEl) completedEl.textContent = completed;
 }
 
 // Display orders
 function displayOrders(orders) {
     const container = document.getElementById('ordersList');
+    if (!container) return;
     
     if (orders.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">No orders yet</p>';
+        container.innerHTML = `
+            <p style="text-align: center; color: #999; padding: 20px;">
+                <i class="fas fa-shopping-cart"></i> No orders yet
+            </p>
+        `;
         return;
     }
     
     container.innerHTML = orders.slice(0, 10).map(order => `
         <div class="order-item">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                 <div>
                     <strong>${order.customer_name}</strong>
                     <div style="font-size: 12px; color: #666;">${order.customer_phone}</div>
                 </div>
-                <div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                     <span class="order-status status-${order.status}">${order.status}</span>
-                    <span style="font-weight: 700; color: var(--primary-red); margin-left: 8px;">K${order.total_amount.toFixed(2)}</span>
+                    <span style="font-weight: 700; color: var(--primary-red);">K${order.total_amount.toFixed(2)}</span>
                 </div>
             </div>
             <div style="font-size: 12px; color: #666; margin-top: 4px;">
@@ -81,15 +114,26 @@ function displayOrders(orders) {
 
 // Logout
 async function logout() {
-    await supabaseClient.auth.signOut();
+    try {
+        const supabase = window.supabaseClient;
+        if (supabase) {
+            await supabase.auth.signOut();
+        }
+    } catch (e) {
+        console.error('Logout error:', e);
+    }
     window.location.href = 'index.html';
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔐 Admin Dashboard Loading...');
     checkAdminAuth();
     loadOrders();
     
     // Refresh every 30 seconds
     setInterval(loadOrders, 30000);
 });
+
+// Make functions global
+window.logout = logout;
