@@ -44,11 +44,11 @@
 
             <!-- Category Filter -->
             <section class="category-filter">
-                <button class="category-btn active" data-category="all">All</button>
-                <button class="category-btn" data-category="main">Main Dishes</button>
-                <button class="category-btn" data-category="appetizer">Appetizers</button>
-                <button class="category-btn" data-category="drinks">Drinks</button>
-                <button class="category-btn" data-category="dessert">Desserts</button>
+                <button class="category-btn active" data-category="all" onclick="filterCategory('all', this)">All</button>
+                <button class="category-btn" data-category="main" onclick="filterCategory('main', this)">Main Dishes</button>
+                <button class="category-btn" data-category="appetizer" onclick="filterCategory('appetizer', this)">Appetizers</button>
+                <button class="category-btn" data-category="drinks" onclick="filterCategory('drinks', this)">Drinks</button>
+                <button class="category-btn" data-category="dessert" onclick="filterCategory('dessert', this)">Desserts</button>
             </section>
 
             <!-- Menu Items -->
@@ -65,7 +65,10 @@
                     <button class="close-cart" onclick="toggleCart()">×</button>
                 </div>
                 <div class="cart-items" id="cartItems">
-                    <!-- Cart items will be listed here -->
+                    <div class="empty-cart" style="text-align: center; padding: 40px 0;">
+                        <i class="fas fa-shopping-cart" style="font-size: 48px; color: #ccc;"></i>
+                        <p style="color: #999; margin-top: 8px;">Your cart is empty</p>
+                    </div>
                 </div>
                 <div class="cart-footer">
                     <div class="cart-total">
@@ -81,19 +84,19 @@
 
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
-            <button class="nav-item active" onclick="navigateTo('home')">
+            <button class="nav-item active" onclick="window.location.href='index.html'">
                 <i class="fas fa-home"></i>
                 <span>Home</span>
             </button>
-            <button class="nav-item" onclick="navigateTo('menu')">
+            <button class="nav-item" onclick="window.location.href='menu.html'">
                 <i class="fas fa-utensils"></i>
                 <span>Menu</span>
             </button>
-            <button class="nav-item" onclick="navigateTo('orders')">
+            <button class="nav-item" onclick="window.location.href='orders.html'">
                 <i class="fas fa-list"></i>
                 <span>Orders</span>
             </button>
-            <button class="nav-item" onclick="navigateTo('profile')">
+            <button class="nav-item" onclick="window.location.href='profile.html'">
                 <i class="fas fa-user"></i>
                 <span>Profile</span>
             </button>
@@ -107,7 +110,7 @@
                 <h3>Place Your Order</h3>
                 <button class="modal-close" onclick="closeModal('checkoutModal')">×</button>
             </div>
-            <form id="checkoutForm">
+            <form id="checkoutForm" onsubmit="placeOrder(event)">
                 <div class="form-group">
                     <label>Full Name *</label>
                     <input type="text" id="customerName" placeholder="Enter your full name" required>
@@ -123,7 +126,7 @@
                 <div class="form-group">
                     <label>Location on Map</label>
                     <div id="mapContainer" style="height: 200px; background: #e0e0e0; border-radius: 10px;"></div>
-                    <button type="button" class="get-location-btn" onclick="getCurrentLocation()" style="margin-top: 10px;">
+                    <button type="button" class="get-location-btn" onclick="getCurrentLocation()" style="margin-top: 10px; width: 100%;">
                         <i class="fas fa-location-dot"></i> Get Current Location
                     </button>
                 </div>
@@ -141,29 +144,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js" type="module"></script>
-    <script src="script.js" type="module"></script>
-
-
-
-    <!-- Bottom Navigation -->
-<nav class="bottom-nav">
-    <button class="nav-item active" onclick="window.location.href='index.html'">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-    </button>
-    <button class="nav-item" onclick="window.location.href='menu.html'">
-        <i class="fas fa-utensils"></i>
-        <span>Menu</span>
-    </button>
-    <button class="nav-item" onclick="window.location.href='orders.html'">
-        <i class="fas fa-list"></i>
-        <span>Orders</span>
-    </button>
-    <button class="nav-item" onclick="window.location.href='profile.html'">
-        <i class="fas fa-user"></i>
-        <span>Profile</span>
-    </button>
-</nav>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
