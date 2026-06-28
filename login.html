@@ -142,6 +142,11 @@
             display: flex;
             justify-content: space-between;
             padding: 4px 0;
+            font-size: 12px;
+        }
+        .demo-creds .cred span:last-child {
+            color: #333;
+            font-weight: 500;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -157,6 +162,42 @@
             animation: spin 1s linear infinite;
             vertical-align: middle;
             margin-right: 8px;
+        }
+        .skip-login {
+            text-align: center;
+            margin-top: 12px;
+        }
+        .skip-login a {
+            color: #999;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .skip-login a:hover {
+            color: #D32F2F;
+            text-decoration: underline;
+        }
+        .status-msg {
+            text-align: center;
+            font-size: 13px;
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 8px;
+            display: none;
+        }
+        .status-msg.show {
+            display: block;
+        }
+        .status-msg.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .status-msg.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .status-msg.error {
+            background: #ffebee;
+            color: #c62828;
         }
     </style>
 </head>
@@ -181,6 +222,8 @@
             </button>
         </div>
 
+        <div id="statusMsg" class="status-msg"></div>
+
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="form-group">
                 <label><i class="fas fa-envelope"></i> Email</label>
@@ -196,8 +239,12 @@
             </button>
         </form>
 
+        <div class="skip-login">
+            <a href="index.html">Continue as Guest →</a>
+        </div>
+
         <div class="demo-creds">
-            <strong>Demo Credentials:</strong>
+            <strong>🔑 Demo Credentials:</strong>
             <div class="cred">
                 <span>👤 Customer:</span>
                 <span>customer@chikorlando.com / customer123</span>
@@ -213,7 +260,14 @@
         </div>
     </div>
 
+    <!-- Load scripts in correct order -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
     <script>
+        // ============================================
+        // LOGIN SCRIPT - Runs after config.js loads
+        // ============================================
+        
         let selectedRole = 'customer';
 
         function selectRole(role) {
@@ -222,6 +276,31 @@
                 btn.classList.toggle('active', btn.dataset.role === role);
             });
             document.getElementById('errorMsg').classList.remove('show');
+            
+            // Auto-fill demo credentials
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            
+            if (role === 'customer') {
+                emailInput.value = 'customer@chikorlando.com';
+                passwordInput.value = 'customer123';
+            } else if (role === 'admin') {
+                emailInput.value = 'admin@chikorlando.com';
+                passwordInput.value = 'admin123';
+            } else if (role === 'delivery') {
+                emailInput.value = 'delivery@chikorlando.com';
+                passwordInput.value = 'delivery123';
+            }
+        }
+
+        function showStatus(message, type = 'loading') {
+            const statusEl = document.getElementById('statusMsg');
+            statusEl.textContent = message;
+            statusEl.className = 'status-msg show ' + type;
+        }
+
+        function hideStatus() {
+            document.getElementById('statusMsg').className = 'status-msg';
         }
 
         async function handleLogin(event) {
@@ -242,12 +321,28 @@
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="spinner"></span> Logging in...';
             errorMsg.classList.remove('show');
+            showStatus('Connecting to server...', 'loading');
 
             try {
-                const supabase = window.supabaseClient;
-                if (!supabase) {
-                    throw new Error('Supabase not initialized');
+                // Check if Supabase is available
+                if (typeof window.supabaseClient === 'undefined') {
+                    throw new Error('Supabase not initialized. Please check config.js');
                 }
+
+                const supabase = window.supabaseClient;
+                
+                // Test connection first
+                showStatus('Testing connection...', 'loading');
+                const { data: testData, error: testError } = await supabase
+                    .from('users')
+                    .select('count', { count: 'exact', head: true });
+                
+                if (testError) {
+                    console.error('Connection test error:', testError);
+                    throw new Error('Cannot connect to database. Please check your connection.');
+                }
+
+                showStatus('Authenticating user...', 'loading');
 
                 // Try to sign in
                 const { data, error } = await supabase.auth.signInWithPassword({
@@ -255,65 +350,63 @@
                     password: password
                 });
 
-                if (error) throw error;
+                if (error) {
+                    if (error.message.includes('Invalid login credentials')) {
+                        throw new Error('Invalid email or password. Please try again.');
+                    }
+                    throw error;
+                }
 
                 if (data.user) {
+                    showStatus('User authenticated, checking role...', 'loading');
+                    
                     // Check user role from database
                     const { data: userData, error: roleError } = await supabase
                         .from('users')
-                        .select('role')
+                        .select('role, name')
                         .eq('id', data.user.id)
                         .single();
 
+                    let userRole = 'customer';
+                    let userName = email.split('@')[0];
+
                     if (roleError) {
-                        // If no role found, check if user exists in users table
-                        const { data: allUsers } = await supabase
+                        // User not in users table - create as customer
+                        showStatus('Creating user profile...', 'loading');
+                        const { error: insertError } = await supabase
                             .from('users')
-                            .select('role')
-                            .eq('email', email)
-                            .single();
-                        
-                        if (allUsers) {
-                            // User exists with role
-                            const userRole = allUsers.role;
-                            
-                            // Save user info
-                            localStorage.setItem('userRole', userRole);
-                            localStorage.setItem('userEmail', email);
-                            localStorage.setItem('userName', data.user.user_metadata?.name || email.split('@')[0]);
+                            .insert([{
+                                id: data.user.id,
+                                email: email,
+                                role: 'customer',
+                                name: email.split('@')[0]
+                            }]);
 
-                            // Redirect based on role
-                            redirectUser(userRole);
-                            return;
-                        } else {
-                            // New user - create customer account
-                            const { error: insertError } = await supabase
-                                .from('users')
-                                .insert([{
-                                    id: data.user.id,
-                                    email: email,
-                                    role: 'customer',
-                                    name: email.split('@')[0]
-                                }]);
-
-                            if (insertError) throw insertError;
-
-                            localStorage.setItem('userRole', 'customer');
-                            localStorage.setItem('userEmail', email);
-                            localStorage.setItem('userName', email.split('@')[0]);
-
-                            window.location.href = 'index.html';
-                            return;
+                        if (insertError) {
+                            console.error('Error creating user:', insertError);
                         }
+                    } else {
+                        userRole = userData.role || 'customer';
+                        userName = userData.name || email.split('@')[0];
                     }
 
-                    // User has role
-                    const userRole = userData.role;
+                    // Save user info
                     localStorage.setItem('userRole', userRole);
                     localStorage.setItem('userEmail', email);
-                    localStorage.setItem('userName', data.user.user_metadata?.name || email.split('@')[0]);
+                    localStorage.setItem('userName', userName);
 
-                    redirectUser(userRole);
+                    showStatus('Login successful! Redirecting...', 'success');
+
+                    // Redirect based on role
+                    setTimeout(() => {
+                        if (userRole === 'admin') {
+                            window.location.href = 'admin.html';
+                        } else if (userRole === 'delivery') {
+                            window.location.href = 'delivery.html';
+                        } else {
+                            window.location.href = 'index.html';
+                        }
+                    }, 1000);
                 }
 
             } catch (error) {
@@ -322,31 +415,24 @@
                 errorMsg.classList.add('show');
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                showStatus(error.message, 'error');
             }
         }
 
-        function redirectUser(role) {
-            switch(role) {
-                case 'admin':
-                    window.location.href = 'admin.html';
-                    break;
-                case 'delivery':
-                    window.location.href = 'delivery.html';
-                    break;
-                case 'customer':
-                default:
-                    window.location.href = 'index.html';
-                    break;
-            }
-        }
-
-        // Auto-login if already logged in
+        // Check if already logged in
         document.addEventListener('DOMContentLoaded', async function() {
-            const supabase = window.supabaseClient;
-            if (supabase) {
+            try {
+                if (typeof window.supabaseClient === 'undefined') {
+                    console.error('Supabase not loaded. Check config.js');
+                    document.getElementById('errorMsg').textContent = 'Configuration error. Please contact support.';
+                    document.getElementById('errorMsg').classList.add('show');
+                    return;
+                }
+
+                const supabase = window.supabaseClient;
                 const { data: { user } } = await supabase.auth.getUser();
+                
                 if (user) {
-                    // Check role and redirect
                     const { data: userData } = await supabase
                         .from('users')
                         .select('role')
@@ -356,10 +442,22 @@
                     if (userData) {
                         localStorage.setItem('userRole', userData.role);
                         localStorage.setItem('userEmail', user.email);
-                        redirectUser(userData.role);
+                        if (userData.role === 'admin') {
+                            window.location.href = 'admin.html';
+                        } else if (userData.role === 'delivery') {
+                            window.location.href = 'delivery.html';
+                        } else {
+                            window.location.href = 'index.html';
+                        }
                     }
                 }
+            } catch (e) {
+                console.error('Auto-login check error:', e);
             }
+            
+            // Auto-fill default credentials
+            document.getElementById('email').value = 'customer@chikorlando.com';
+            document.getElementById('password').value = 'customer123';
         });
     </script>
 </body>
