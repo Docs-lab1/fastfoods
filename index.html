@@ -146,5 +146,27 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <script src="script.js"></script>
+
+
+
+
+    <script>
+    // Check if user is logged in and update nav
+    document.addEventListener('DOMContentLoaded', function() {
+        const userRole = localStorage.getItem('userRole');
+        const loginBtn = document.querySelector('.nav-item:last-child');
+        
+        if (userRole === 'admin') {
+            loginBtn.innerHTML = '<i class="fas fa-user-shield"></i><span>Admin</span>';
+            loginBtn.onclick = function() { window.location.href = 'admin.html'; };
+        } else if (userRole === 'delivery') {
+            loginBtn.innerHTML = '<i class="fas fa-truck"></i><span>Delivery</span>';
+            loginBtn.onclick = function() { window.location.href = 'delivery.html'; };
+        } else if (userRole) {
+            loginBtn.innerHTML = '<i class="fas fa-user"></i><span>Profile</span>';
+            loginBtn.onclick = function() { window.location.href = 'profile.html'; };
+        }
+    });
+</script>
 </body>
 </html>
