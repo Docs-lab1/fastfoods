@@ -9,6 +9,9 @@ let map = null;
 let marker = null;
 let userLocation = null;
 
+// Image path configuration - UPDATE THIS TO YOUR IMAGE FOLDER PATH
+const IMAGE_PATH = 'images/'; // Your images folder
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Chikorlando App Initializing...');
@@ -63,7 +66,7 @@ async function loadMenuItems(category = 'all') {
     }
 }
 
-// Display menu items in grid
+// Display menu items in grid - WITH REAL IMAGES
 function displayMenuItems(items) {
     const grid = document.getElementById('menuGrid');
     if (!grid) return;
@@ -81,38 +84,34 @@ function displayMenuItems(items) {
         return;
     }
     
-    const emojiMap = {
-        'Grilled Chicken': '🍗',
-        'Beef Stew': '🥩',
-        'Fish Fry': '🐟',
-        'Vegetable Pasta': '🍝',
-        'Spring Rolls': '🌯',
-        'Samosa': '🥟',
-        'Garlic Bread': '🍞',
-        'Fresh Juice': '🧃',
-        'Soda': '🥤',
-        'Milkshake': '🥛',
-        'Chocolate Cake': '🍰',
-        'Ice Cream': '🍦'
-    };
-    
     grid.innerHTML = items.map(item => {
-        const emoji = emojiMap[item.name] || '🍽️';
-        const itemId = item.id;
-        const itemName = item.name;
-        const itemPrice = parseFloat(item.price);
+        // Determine image source
+        let imageHtml = '';
+        if (item.image_url) {
+            // If image_url is stored in database
+            imageHtml = `<img src="${item.image_url}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;">`;
+        } else {
+            // Try to load from images folder using name
+            const imageName = item.name.toLowerCase().replace(/\s+/g, '-') + '.jpg';
+            imageHtml = `
+                <img src="${IMAGE_PATH}${imageName}" 
+                     alt="${item.name}" 
+                     style="width:100%;height:100%;object-fit:cover;"
+                     onerror="this.parentElement.innerHTML='<span style=\\'font-size:48px;\\'>🍽️</span>'">
+            `;
+        }
         
         return `
-        <div class="menu-item" data-id="${itemId}">
+        <div class="menu-item" data-id="${item.id}">
             <div class="menu-item-image">
-                <span style="font-size: 48px;">${emoji}</span>
+                ${imageHtml}
             </div>
             <div class="menu-item-content">
-                <h4>${itemName}</h4>
+                <h4>${item.name}</h4>
                 <p>${item.description || 'Delicious meal'}</p>
                 <div class="menu-item-footer">
-                    <span class="menu-item-price">K${itemPrice.toFixed(2)}</span>
-                    <button class="add-to-cart-btn" onclick="addToCart('${itemId}', '${itemName}', ${itemPrice})">
+                    <span class="menu-item-price">K${parseFloat(item.price).toFixed(2)}</span>
+                    <button class="add-to-cart-btn" onclick="addToCart('${item.id}', '${item.name}', ${parseFloat(item.price)})">
                         <i class="fas fa-plus"></i> Add
                     </button>
                 </div>
@@ -125,7 +124,6 @@ function displayMenuItems(items) {
 function addToCart(id, name, price) {
     console.log('🛒 Adding to cart:', name, price);
     
-    // Check if item already in cart
     const existing = cart.find(item => item.id === id);
     
     if (existing) {
@@ -140,7 +138,6 @@ function addToCart(id, name, price) {
     saveCartToStorage();
     showToast(`${name} added to cart! 🛒`, 'success');
     
-    // Update cart count in localStorage
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
     localStorage.setItem('cartCount', totalItems);
 }
@@ -240,7 +237,6 @@ function initializeMap() {
     const mapContainer = document.getElementById('mapContainer');
     if (!mapContainer) return;
     
-    // Default location (Kasama District)
     const defaultLocation = { lat: -10.2117, lng: 31.1818 };
     
     if (typeof google !== 'undefined' && google.maps) {
@@ -373,19 +369,16 @@ async function placeOrder(event) {
             
         if (error) throw error;
         
-        // Save customer name for orders page
         localStorage.setItem('customerName', name);
         
         showToast('Order placed successfully! 🎉', 'success');
         console.log('✅ Order placed successfully!');
         
-        // Clear cart and close modal
         cart = [];
         updateCartUI();
         saveCartToStorage();
         closeModal('checkoutModal');
         
-        // Reset form
         const form = document.getElementById('checkoutForm');
         if (form) form.reset();
         
@@ -481,6 +474,42 @@ function loadCartFromStorage() {
     }
 }
 
+// User icon handler
+function handleUserAction() {
+    const userRole = localStorage.getItem('userRole');
+    
+    if (userRole === 'admin') {
+        window.location.href = 'admin.html';
+    } else if (userRole === 'delivery') {
+        window.location.href = 'delivery.html';
+    } else if (userRole === 'customer') {
+        window.location.href = 'profile.html';
+    } else {
+        window.location.href = 'login.html';
+    }
+}
+
+// Update user icon on load
+document.addEventListener('DOMContentLoaded', function() {
+    const userRole = localStorage.getItem('userRole');
+    const userIcon = document.getElementById('userIcon');
+    const userBtn = document.getElementById('userBtn');
+    
+    if (userRole === 'admin') {
+        userIcon.className = 'fas fa-user-shield';
+        if (userBtn) userBtn.style.background = 'rgba(255,215,0,0.3)';
+    } else if (userRole === 'delivery') {
+        userIcon.className = 'fas fa-truck';
+        if (userBtn) userBtn.style.background = 'rgba(76, 175, 80, 0.3)';
+    } else if (userRole === 'customer') {
+        userIcon.className = 'fas fa-user-check';
+        if (userBtn) userBtn.style.background = 'rgba(33, 150, 243, 0.3)';
+    } else {
+        userIcon.className = 'fas fa-user';
+        if (userBtn) userBtn.style.background = 'rgba(255,255,255,0.2)';
+    }
+});
+
 // Make functions globally accessible
 window.addToCart = addToCart;
 window.updateQuantity = updateQuantity;
@@ -492,6 +521,6 @@ window.closeModal = closeModal;
 window.showMenu = showMenu;
 window.filterCategory = filterCategory;
 window.loadMenuItems = loadMenuItems;
+window.handleUserAction = handleUserAction;
 
 console.log('🍽️ Chikorlando Restaurant App Loaded Successfully!');
-console.log('📋 Available functions:', Object.keys(window).filter(k => k.includes('addToCart') || k.includes('toggle') || k.includes('proceed')));
