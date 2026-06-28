@@ -12,9 +12,18 @@ let userLocation = null;
 // Initialize App
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Chikorlando App Initializing...');
-    loadMenuItems();
     loadCartFromStorage();
     updateCartUI();
+    loadMenuItems();
+    
+    // Setup form submit
+    const form = document.getElementById('checkoutForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            placeOrder(e);
+        });
+    }
 });
 
 // Load menu items from Supabase
@@ -26,6 +35,7 @@ async function loadMenuItems(category = 'all') {
         if (!supabase) {
             console.error('❌ Supabase not initialized!');
             showToast('Error: Supabase not configured', 'error');
+            displayMenuItems([]);
             return;
         }
         
@@ -88,17 +98,21 @@ function displayMenuItems(items) {
     
     grid.innerHTML = items.map(item => {
         const emoji = emojiMap[item.name] || '🍽️';
+        const itemId = item.id;
+        const itemName = item.name;
+        const itemPrice = parseFloat(item.price);
+        
         return `
-        <div class="menu-item" data-id="${item.id}">
+        <div class="menu-item" data-id="${itemId}">
             <div class="menu-item-image">
                 <span style="font-size: 48px;">${emoji}</span>
             </div>
             <div class="menu-item-content">
-                <h4>${item.name}</h4>
+                <h4>${itemName}</h4>
                 <p>${item.description || 'Delicious meal'}</p>
                 <div class="menu-item-footer">
-                    <span class="menu-item-price">K${parseFloat(item.price).toFixed(2)}</span>
-                    <button class="add-to-cart-btn" onclick="addToCart('${item.id}', '${item.name}', ${parseFloat(item.price)})">
+                    <span class="menu-item-price">K${itemPrice.toFixed(2)}</span>
+                    <button class="add-to-cart-btn" onclick="addToCart('${itemId}', '${itemName}', ${itemPrice})">
                         <i class="fas fa-plus"></i> Add
                     </button>
                 </div>
@@ -109,17 +123,26 @@ function displayMenuItems(items) {
 
 // Add to cart function
 function addToCart(id, name, price) {
+    console.log('🛒 Adding to cart:', name, price);
+    
+    // Check if item already in cart
     const existing = cart.find(item => item.id === id);
     
     if (existing) {
         existing.quantity += 1;
+        console.log(`✅ ${name} quantity updated to ${existing.quantity}`);
     } else {
         cart.push({ id, name, price, quantity: 1 });
+        console.log(`✅ ${name} added to cart`);
     }
     
     updateCartUI();
     saveCartToStorage();
     showToast(`${name} added to cart! 🛒`, 'success');
+    
+    // Update cart count in localStorage
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    localStorage.setItem('cartCount', totalItems);
 }
 
 // Update cart UI
@@ -127,9 +150,6 @@ function updateCartUI() {
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
     const cartCount = document.getElementById('cartCount');
     if (cartCount) cartCount.textContent = count;
-    
-    // Update cart count in localStorage
-    localStorage.setItem('cartCount', count);
     
     const cartItems = document.getElementById('cartItems');
     if (!cartItems) return;
@@ -191,11 +211,16 @@ function filterCategory(category, btn) {
 // Toggle cart
 function toggleCart() {
     const sidebar = document.getElementById('cartSidebar');
-    if (sidebar) sidebar.classList.toggle('open');
+    if (sidebar) {
+        sidebar.classList.toggle('open');
+        console.log('🛒 Cart toggled:', sidebar.classList.contains('open') ? 'open' : 'closed');
+    }
 }
 
 // Proceed to checkout
 function proceedToCheckout() {
+    console.log('🛒 Proceeding to checkout...');
+    
     if (cart.length === 0) {
         showToast('Your cart is empty!', 'error');
         return;
@@ -203,8 +228,11 @@ function proceedToCheckout() {
     
     toggleCart();
     const modal = document.getElementById('checkoutModal');
-    if (modal) modal.classList.add('show');
-    initializeMap();
+    if (modal) {
+        modal.classList.add('show');
+        console.log('✅ Checkout modal opened');
+        initializeMap();
+    }
 }
 
 // Initialize Google Map
@@ -296,6 +324,7 @@ function getAddressFromCoords(lat, lng) {
 // Place order
 async function placeOrder(event) {
     event.preventDefault();
+    console.log('📦 Placing order...');
     
     const name = document.getElementById('customerName')?.value;
     const phone = document.getElementById('customerPhone')?.value;
@@ -303,6 +332,11 @@ async function placeOrder(event) {
     
     if (!name || !phone || !address) {
         showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    if (cart.length === 0) {
+        showToast('Your cart is empty!', 'error');
         return;
     }
     
@@ -330,6 +364,8 @@ async function placeOrder(event) {
             status: 'pending'
         };
         
+        console.log('📦 Order data:', orderData);
+        
         const { data, error } = await supabase
             .from('orders')
             .insert([orderData])
@@ -341,6 +377,7 @@ async function placeOrder(event) {
         localStorage.setItem('customerName', name);
         
         showToast('Order placed successfully! 🎉', 'success');
+        console.log('✅ Order placed successfully!');
         
         // Clear cart and close modal
         cart = [];
@@ -354,7 +391,7 @@ async function placeOrder(event) {
         
     } catch (error) {
         console.error('Error placing order:', error);
-        showToast('Error placing order. Please try again.', 'error');
+        showToast('Error placing order: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
@@ -377,11 +414,11 @@ function showToast(message, type = 'info') {
     if (existing) existing.remove();
     
     const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
     
     let bgColor = '#2196F3';
-    if (type === 'success') bgColor = '#4CAF50';
-    if (type === 'error') bgColor = '#f44336';
+    let icon = 'ℹ️';
+    if (type === 'success') { bgColor = '#4CAF50'; icon = '✅'; }
+    if (type === 'error') { bgColor = '#f44336'; icon = '❌'; }
     
     toast.style.cssText = `
         position: fixed;
@@ -398,8 +435,9 @@ function showToast(message, type = 'info') {
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         max-width: 90%;
         text-align: center;
+        font-size: 14px;
     `;
-    toast.textContent = message;
+    toast.textContent = `${icon} ${message}`;
     document.body.appendChild(toast);
     
     setTimeout(() => {
@@ -423,6 +461,7 @@ function closeModal(id) {
 // Save cart to localStorage
 function saveCartToStorage() {
     localStorage.setItem('cart', JSON.stringify(cart));
+    console.log('💾 Cart saved to localStorage:', cart.length, 'items');
 }
 
 // Load cart from localStorage
@@ -431,9 +470,14 @@ function loadCartFromStorage() {
     if (saved) {
         try {
             cart = JSON.parse(saved);
+            console.log('📂 Cart loaded from localStorage:', cart.length, 'items');
         } catch (e) {
             cart = [];
+            console.warn('⚠️ Error loading cart, resetting');
         }
+    } else {
+        cart = [];
+        console.log('📂 No saved cart found');
     }
 }
 
@@ -449,20 +493,5 @@ window.showMenu = showMenu;
 window.filterCategory = filterCategory;
 window.loadMenuItems = loadMenuItems;
 
-// Add toast styles if not already present
-const styleSheet = document.createElement('style');
-styleSheet.textContent = `
-    @keyframes slideDown {
-        from {
-            transform: translateX(-50%) translateY(-100px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-    }
-`;
-document.head.appendChild(styleSheet);
-
 console.log('🍽️ Chikorlando Restaurant App Loaded Successfully!');
+console.log('📋 Available functions:', Object.keys(window).filter(k => k.includes('addToCart') || k.includes('toggle') || k.includes('proceed')));
