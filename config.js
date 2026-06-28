@@ -12,5 +12,8 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Google Maps API Key (Get from Google Cloud Console)
 const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
 
-// Export for use in other files
-export { supabaseClient, GOOGLE_MAPS_API_KEY };
+// Make available globally
+window.supabaseClient = supabaseClient;
+window.GOOGLE_MAPS_API_KEY = GOOGLE_MAPS_API_KEY;
+
+console.log('✅ Chikorlando Config loaded!');
