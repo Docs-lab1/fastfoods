@@ -161,154 +161,169 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js" type="module"></script>
-    <script type="module">
-        import { supabaseClient } from './config.js';
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+    // Menu page JavaScript
+    let currentCategory = 'all';
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 
-        let currentCategory = 'all';
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-
-        // Load menu items
-        async function loadMenuItems(category = 'all') {
-            try {
-                let query = supabaseClient
-                    .from('menu_items')
-                    .select('*')
-                    .eq('available', true);
-
-                if (category !== 'all') {
-                    query = query.eq('category', category);
-                }
-
-                const { data, error } = await query.order('name');
-                if (error) throw error;
-                
-                displayMenuItems(data || []);
-            } catch (error) {
-                console.error('Error loading menu:', error);
-                document.getElementById('menuGridFull').innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
-                        <i class="fas fa-exclamation-circle" style="font-size: 48px;"></i>
-                        <p style="margin-top: 12px;">Error loading menu items</p>
-                    </div>
-                `;
-            }
-        }
-
-        // Display menu items
-        function displayMenuItems(items) {
-            const grid = document.getElementById('menuGridFull');
-            
-            if (!items || items.length === 0) {
-                grid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
-                        <i class="fas fa-utensils" style="font-size: 48px;"></i>
-                        <p style="margin-top: 12px;">No items in this category</p>
-                    </div>
-                `;
+    // Load menu items
+    async function loadMenuItems(category = 'all') {
+        try {
+            const supabase = window.supabaseClient;
+            if (!supabase) {
+                console.error('Supabase not initialized');
                 return;
             }
+            
+            let query = supabase
+                .from('menu_items')
+                .select('*')
+                .eq('available', true);
 
-            const emojiMap = {
-                'Grilled Chicken': '🍗',
-                'Beef Stew': '🥩',
-                'Fish Fry': '🐟',
-                'Vegetable Pasta': '🍝',
-                'Spring Rolls': '🌯',
-                'Samosa': '🥟',
-                'Garlic Bread': '🍞',
-                'Fresh Juice': '🧃',
-                'Soda': '🥤',
-                'Milkshake': '🥛',
-                'Chocolate Cake': '🍰',
-                'Ice Cream': '🍦'
-            };
+            if (category !== 'all') {
+                query = query.eq('category', category);
+            }
 
-            grid.innerHTML = items.map(item => {
-                const emoji = emojiMap[item.name] || '🍽️';
-                return `
-                    <div class="menu-item-card">
-                        <div class="image">${emoji}</div>
-                        <div class="info">
-                            <h4>${item.name}</h4>
-                            <p>${item.description || 'Delicious meal'}</p>
-                            <div class="footer">
-                                <span class="price">K${parseFloat(item.price).toFixed(2)}</span>
-                                <button class="add-btn" onclick="addToCart('${item.id}', '${item.name}', ${parseFloat(item.price)})">
-                                    <i class="fas fa-plus"></i> Add
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            const { data, error } = await query.order('name');
+            if (error) throw error;
+            
+            displayMenuItems(data || []);
+        } catch (error) {
+            console.error('Error loading menu:', error);
+            document.getElementById('menuGridFull').innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
+                    <i class="fas fa-exclamation-circle" style="font-size: 48px;"></i>
+                    <p style="margin-top: 12px;">Error loading menu items</p>
+                    <button onclick="loadMenuItems()" style="margin-top: 12px; background: var(--primary-red); color: white; border: none; padding: 8px 20px; border-radius: 50px; cursor: pointer;">
+                        <i class="fas fa-refresh"></i> Retry
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    // Display menu items
+    function displayMenuItems(items) {
+        const grid = document.getElementById('menuGridFull');
+        if (!grid) return;
+        
+        if (!items || items.length === 0) {
+            grid.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
+                    <i class="fas fa-utensils" style="font-size: 48px;"></i>
+                    <p style="margin-top: 12px;">No items in this category</p>
+                </div>
+            `;
+            return;
         }
 
-        // Add to cart
-        window.addToCart = function(id, name, price) {
-            const existing = cart.find(item => item.id === id);
-            if (existing) {
-                existing.quantity += 1;
-            } else {
-                cart.push({ id, name, price, quantity: 1 });
-            }
-            
-            localStorage.setItem('cart', JSON.stringify(cart));
-            
-            // Show toast notification
-            showToast(`${name} added to cart! 🛒`);
-            
-            // Update cart count in localStorage
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            localStorage.setItem('cartCount', totalItems);
+        const emojiMap = {
+            'Grilled Chicken': '🍗',
+            'Beef Stew': '🥩',
+            'Fish Fry': '🐟',
+            'Vegetable Pasta': '🍝',
+            'Spring Rolls': '🌯',
+            'Samosa': '🥟',
+            'Garlic Bread': '🍞',
+            'Fresh Juice': '🧃',
+            'Soda': '🥤',
+            'Milkshake': '🥛',
+            'Chocolate Cake': '🍰',
+            'Ice Cream': '🍦'
         };
 
-        // Toast notification
-        function showToast(message) {
-            const existing = document.querySelector('.toast');
-            if (existing) existing.remove();
-            
-            const toast = document.createElement('div');
-            toast.className = 'toast success';
-            toast.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #4CAF50;
-                color: white;
-                padding: 12px 24px;
-                border-radius: 12px;
-                font-weight: 500;
-                z-index: 1000;
-                animation: slideDown 0.3s ease;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        grid.innerHTML = items.map(item => {
+            const emoji = emojiMap[item.name] || '🍽️';
+            return `
+                <div class="menu-item-card">
+                    <div class="image">${emoji}</div>
+                    <div class="info">
+                        <h4>${item.name}</h4>
+                        <p>${item.description || 'Delicious meal'}</p>
+                        <div class="footer">
+                            <span class="price">K${parseFloat(item.price).toFixed(2)}</span>
+                            <button class="add-btn" onclick="addToCart('${item.id}', '${item.name}', ${parseFloat(item.price)})">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                </div>
             `;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+        }).join('');
+    }
+
+    // Add to cart
+    function addToCart(id, name, price) {
+        const existing = cart.find(item => item.id === id);
+        if (existing) {
+            existing.quantity += 1;
+        } else {
+            cart.push({ id, name, price, quantity: 1 });
+        }
+        
+        localStorage.setItem('cart', JSON.stringify(cart));
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        localStorage.setItem('cartCount', totalItems);
+        
+        showToast(`${name} added to cart! 🛒`);
+    }
+
+    function showToast(message) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            max-width: 90%;
+            text-align: center;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Category tabs
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.getElementById('categoryTabs');
+        if (tabs) {
+            tabs.addEventListener('click', function(e) {
+                const tab = e.target.closest('.category-tab');
+                if (!tab) return;
+                
+                document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                currentCategory = tab.dataset.category;
+                loadMenuItems(currentCategory);
+            });
         }
 
-        // Category tabs
-        document.getElementById('categoryTabs').addEventListener('click', function(e) {
-            const tab = e.target.closest('.category-tab');
-            if (!tab) return;
-            
-            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            
-            currentCategory = tab.dataset.category;
-            loadMenuItems(currentCategory);
-        });
-
-        // Load initial menu
         loadMenuItems('all');
-    </script>
+        console.log('📋 Menu page loaded');
+    });
+
+    // Make functions global
+    window.addToCart = addToCart;
+    window.loadMenuItems = loadMenuItems;
+</script>
 </body>
 </html>
