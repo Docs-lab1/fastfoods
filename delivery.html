@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chikorlando - Delivery Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .delivery-container {
+            background: #f5f5f5;
+            min-height: 100vh;
+            color: #333;
+        }
+        .delivery-header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-red));
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delivery-content {
+            padding: 20px;
+        }
+        .delivery-status {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+        .status-online { background: #4CAF50; color: white; }
+        .status-offline { background: #f44336; color: white; }
+        .delivery-order { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 16px; }
+        .action-btn { background: var(--primary-red); color: white; border: none; padding: 8px 20px; border-radius: 50px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="delivery-container">
+        <div class="delivery-header">
+            <div>
+                <h1><i class="fas fa-truck"></i> Delivery Dashboard</h1>
+                <small>Chikorlando - Kasama</small>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+        
+        <div class="delivery-content">
+            <div class="delivery-status">
+                <div>
+                    <strong>Status:</strong>
+                    <span class="status-badge status-online" id="statusBadge">Online</span>
+                </div>
+                <button onclick="toggleDeliveryStatus()" class="action-btn">
+                    <i class="fas fa-toggle-on"></i> Toggle Status
+                </button>
+            </div>
+            
+            <div id="deliveryOrders">
+                <!-- Orders for delivery will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="delivery.js"></script>
+</body>
+</html>
