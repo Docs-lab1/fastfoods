@@ -12,12 +12,8 @@ async function logout() {
         console.error('Logout error:', e);
     }
     
-    // Clear local storage
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('cart');
-    localStorage.removeItem('cartCount');
+    // Clear all local storage
+    localStorage.clear();
     
     // Redirect to login
     window.location.href = 'login.html';
@@ -25,3 +21,5 @@ async function logout() {
 
 // Make logout globally available
 window.logout = logout;
+
+console.log('🔓 Logout function ready');
