@@ -4,346 +4,822 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chikorlando - Admin Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .admin-container {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f5f5f5;
-            min-height: 100vh;
             color: #333;
         }
-        .admin-header {
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary-red));
-            color: white;
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
+        }
+        .admin-header {
+            background: linear-gradient(135deg, #B71C1C, #D32F2F);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 15px;
+            margin-bottom: 24px;
+        }
+        .admin-header h1 {
+            font-size: 24px;
         }
         .admin-header .user-info {
             font-size: 13px;
-            opacity: 0.8;
+            opacity: 0.9;
         }
-        .admin-content {
-            padding: 20px;
-            padding-bottom: 100px;
+        .admin-header .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .btn-white {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .btn-white:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #388E3C;
+        }
+        .btn-primary {
+            background: #D32F2F;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #B71C1C;
+        }
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #f57c00;
+        }
+
+        /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
             margin-bottom: 24px;
         }
         .stat-card {
             background: white;
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             text-align: center;
+            transition: transform 0.3s ease;
         }
-        .stat-card i { font-size: 32px; color: var(--primary-red); }
-        .stat-card h3 { font-size: 24px; margin: 8px 0; }
-        .stat-card p { color: #666; font-size: 12px; }
-        .orders-list { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .order-item { border-bottom: 1px solid #eee; padding: 12px 0; }
-        .order-item:last-child { border-bottom: none; }
-        .order-status { padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+        .stat-card i {
+            font-size: 32px;
+            color: #D32F2F;
+        }
+        .stat-card h3 {
+            font-size: 28px;
+            margin: 8px 0 4px;
+            color: #333;
+        }
+        .stat-card p {
+            color: #999;
+            font-size: 13px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 10px;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: #666;
+            font-size: 14px;
+        }
+        .tab-btn.active {
+            background: #D32F2F;
+            color: white;
+        }
+        .tab-btn:hover:not(.active) {
+            background: #f5f5f5;
+        }
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Orders List */
+        .order-item {
+            border-bottom: 1px solid #eee;
+            padding: 16px 0;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .order-status {
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
         .status-pending { background: #ff9800; color: white; }
         .status-preparing { background: #2196F3; color: white; }
         .status-ready { background: #4CAF50; color: white; }
         .status-delivering { background: #9C27B0; color: white; }
         .status-delivered { background: #666; color: white; }
-        .logout-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 50px;
-            cursor: pointer;
+
+        /* Users Table */
+        .table-responsive {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+        }
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
             font-size: 14px;
         }
-        .logout-btn:hover {
-            background: rgba(255,255,255,0.3);
+        table tr:hover td {
+            background: #fafafa;
         }
-        .status-update {
-            margin-top: 8px;
-        }
-        .status-update select {
-            padding: 4px 8px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        .status-update button {
-            padding: 4px 12px;
-            border-radius: 8px;
-            border: none;
-            background: var(--primary-red);
-            color: white;
-            font-size: 12px;
-            cursor: pointer;
-            margin-left: 4px;
-        }
-        .status-update button:hover {
-            background: var(--primary-dark);
-        }
-        .refresh-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-right: 8px;
-        }
-        .refresh-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        .auth-error {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        .auth-error i {
-            font-size: 64px;
-            color: #f44336;
-        }
-        .auth-error h2 {
-            color: #333;
+
+        /* Menu Items Grid */
+        .menu-grid-admin {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
             margin-top: 16px;
         }
-        .auth-error p {
+        .menu-item-admin {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+        .menu-item-admin:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .menu-item-admin .image-preview {
+            width: 100%;
+            height: 150px;
+            border-radius: 8px;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .menu-item-admin .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .menu-item-admin .item-info h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        .menu-item-admin .item-info p {
             color: #666;
+            font-size: 13px;
+        }
+        .menu-item-admin .item-info .price {
+            color: #D32F2F;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .menu-item-admin .item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .menu-item-admin .item-actions .btn {
+            flex: 1;
+            justify-content: center;
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #D32F2F;
+            outline: none;
+        }
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            font-size: 20px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+        }
+        .modal-close:hover {
+            color: #333;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            max-width: 90%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s ease;
+        }
+        .toast.success { background: #4CAF50; }
+        .toast.error { background: #f44336; }
+        .toast.info { background: #2196F3; }
+
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 12px;
+            color: #ccc;
+        }
+
+        .image-upload-preview {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
             margin-top: 8px;
         }
-        .auth-error .login-link {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 12px 24px;
-            background: var(--primary-red);
-            color: white;
-            border-radius: 50px;
-            text-decoration: none;
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .admin-header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            .admin-header .header-actions {
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="admin-container" id="adminContainer">
+    <div class="admin-container">
+        <!-- Header -->
         <div class="admin-header">
             <div>
                 <h1><i class="fas fa-utensils"></i> Chikorlando Admin</h1>
-                <small>Kasama District</small>
                 <div class="user-info" id="adminUserInfo">Loading...</div>
             </div>
-            <div>
-                <button class="refresh-btn" onclick="loadOrders()">
+            <div class="header-actions">
+                <button class="btn btn-white" onclick="refreshData()">
                     <i class="fas fa-sync"></i> Refresh
                 </button>
-                <button class="logout-btn" onclick="logout()">
+                <button class="btn btn-danger" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
         </div>
-        
-        <div class="admin-content">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <i class="fas fa-shopping-cart"></i>
-                    <h3 id="totalOrders">0</h3>
-                    <p>Total Orders</p>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-clock"></i>
-                    <h3 id="pendingOrders">0</h3>
-                    <p>Pending Orders</p>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-check-circle"></i>
-                    <h3 id="completedOrders">0</h3>
-                    <p>Completed</p>
-                </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <i class="fas fa-shopping-cart"></i>
+                <h3 id="totalOrders">0</h3>
+                <p>Total Orders</p>
             </div>
-            
-            <div class="orders-list">
-                <h3>All Orders <span id="orderCount" style="font-size: 14px; color: #999;"></span></h3>
-                <div id="ordersList">
-                    <p style="text-align: center; color: #999; padding: 20px;">Loading orders...</p>
-                </div>
+            <div class="stat-card">
+                <i class="fas fa-clock"></i>
+                <h3 id="pendingOrders">0</h3>
+                <p>Pending Orders</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle"></i>
+                <h3 id="completedOrders">0</h3>
+                <p>Completed Orders</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <h3 id="totalUsers">0</h3>
+                <p>Total Users</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-utensils"></i>
+                <h3 id="totalItems">0</h3>
+                <p>Menu Items</p>
             </div>
         </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('orders')">
+                <i class="fas fa-list"></i> Orders
+            </button>
+            <button class="tab-btn" onclick="switchTab('users')">
+                <i class="fas fa-users"></i> Users
+            </button>
+            <button class="tab-btn" onclick="switchTab('menu')">
+                <i class="fas fa-utensils"></i> Menu
+            </button>
+            <button class="tab-btn" onclick="switchTab('add-item')">
+                <i class="fas fa-plus"></i> Add Item
+            </button>
+        </div>
+
+        <!-- Orders Tab -->
+        <div class="tab-content active" id="tab-orders">
+            <div id="ordersList">
+                <p style="text-align: center; color: #999; padding: 20px;">Loading orders...</p>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div class="tab-content" id="tab-users">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <h3>All Users</h3>
+                <button class="btn btn-primary" onclick="openAddUserModal()">
+                    <i class="fas fa-user-plus"></i> Add User
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Phone</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersList">
+                        <tr><td colspan="5" style="text-align: center; color: #999;">Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Menu Tab -->
+        <div class="tab-content" id="tab-menu">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <h3>Menu Items</h3>
+                <button class="btn btn-primary" onclick="switchTab('add-item')">
+                    <i class="fas fa-plus"></i> Add New Item
+                </button>
+            </div>
+            <div class="menu-grid-admin" id="menuItemsList">
+                <p style="grid-column: 1 / -1; text-align: center; color: #999; padding: 20px;">Loading menu items...</p>
+            </div>
+        </div>
+
+        <!-- Add Item Tab -->
+        <div class="tab-content" id="tab-add-item">
+            <h3>Add New Menu Item</h3>
+            <form id="addItemForm" onsubmit="addMenuItem(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Item Name *</label>
+                        <input type="text" id="itemName" placeholder="e.g., Grilled Chicken" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Price (K) *</label>
+                        <input type="number" id="itemPrice" placeholder="0.00" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="itemDescription" placeholder="Describe the dish..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="itemCategory" required>
+                            <option value="main">Main Dishes</option>
+                            <option value="appetizer">Appetizers</option>
+                            <option value="drinks">Drinks</option>
+                            <option value="dessert">Desserts</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Emoji/Icon</label>
+                        <input type="text" id="itemIcon" placeholder="🍗" maxlength="2">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="url" id="itemImage" placeholder="https://example.com/image.jpg">
+                    <img id="imagePreview" class="image-upload-preview" style="display: none;">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="itemAvailable" checked>
+                        Available for ordering
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%; justify-content: center; padding: 12px;">
+                    <i class="fas fa-plus"></i> Add Item
+                </button>
+            </form>
+        </div>
     </div>
-    
+
+    <!-- Add User Modal -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-plus"></i> Add User</h2>
+                <button class="modal-close" onclick="closeModal('addUserModal')">×</button>
+            </div>
+            <form id="addUserForm" onsubmit="addUser(event)">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="userName" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="userEmail" placeholder="user@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" id="userPassword" placeholder="Min 6 characters" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select id="userRole" required>
+                        <option value="customer">Customer</option>
+                        <option value="admin">Admin</option>
+                        <option value="delivery">Delivery Boy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="userPhone" placeholder="0977 123 456">
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%; justify-content: center; padding: 12px;">
+                    <i class="fas fa-user-plus"></i> Create User
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Item Modal -->
+    <div class="modal" id="editItemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Edit Menu Item</h2>
+                <button class="modal-close" onclick="closeModal('editItemModal')">×</button>
+            </div>
+            <form id="editItemForm" onsubmit="updateMenuItem(event)">
+                <input type="hidden" id="editItemId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Item Name *</label>
+                        <input type="text" id="editItemName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Price (K) *</label>
+                        <input type="number" id="editItemPrice" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editItemDescription"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="editItemCategory" required>
+                            <option value="main">Main Dishes</option>
+                            <option value="appetizer">Appetizers</option>
+                            <option value="drinks">Drinks</option>
+                            <option value="dessert">Desserts</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Emoji/Icon</label>
+                        <input type="text" id="editItemIcon" maxlength="2">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="url" id="editItemImage">
+                    <img id="editImagePreview" class="image-upload-preview" style="display: none;">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="editItemAvailable" checked>
+                        Available for ordering
+                    </label>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-success" style="flex: 1; justify-content: center; padding: 12px;">
+                        <i class="fas fa-save"></i> Update
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="deleteMenuItem()" style="flex: 1; justify-content: center; padding: 12px;">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <script>
         // ============================================
-        // ADMIN DASHBOARD
+        // ADMIN DASHBOARD - FULL SCRIPT
         // ============================================
 
-        // Check if user is admin
+        let currentUser = null;
+
+        // Check admin auth
         async function checkAdminAuth() {
             try {
-                // Check if Supabase is available
-                if (typeof window.supabaseClient === 'undefined') {
-                    throw new Error('Supabase not initialized');
+                const supabase = window.supabaseClient;
+                if (!supabase) {
+                    window.location.href = 'login.html';
+                    return;
                 }
 
-                const supabase = window.supabaseClient;
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
-                
-                if (userError) throw userError;
-                
-                if (!user) {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                if (error || !user) {
                     window.location.href = 'login.html';
-                    return false;
+                    return;
                 }
-                
-                // Check user role
-                const { data, error } = await supabase
+
+                const { data, error: roleError } = await supabase
                     .from('users')
                     .select('role, name')
                     .eq('id', user.id)
                     .single();
-                    
-                if (error || !data || data.role !== 'admin') {
-                    // Not admin - redirect to login
-                    await supabase.auth.signOut();
+
+                if (roleError || !data || data.role !== 'admin') {
                     window.location.href = 'login.html';
-                    return false;
+                    return;
                 }
-                
-                // Show user info
+
+                currentUser = user;
                 document.getElementById('adminUserInfo').textContent = 
                     `👤 ${data.name || 'Admin'} • ${user.email}`;
-                
+
                 console.log('✅ Admin logged in:', user.email);
                 return true;
             } catch (error) {
                 console.error('Auth error:', error);
-                document.getElementById('adminContainer').innerHTML = `
-                    <div class="auth-error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <h2>Authentication Error</h2>
-                        <p>${error.message}</p>
-                        <a href="login.html" class="login-link">
-                            <i class="fas fa-sign-in-alt"></i> Go to Login
-                        </a>
-                    </div>
-                `;
+                window.location.href = 'login.html';
                 return false;
             }
         }
 
-        // Load orders
+        // Switch tabs
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            const btn = document.querySelector(`.tab-btn[onclick*="${tab}"]`);
+            if (btn) btn.classList.add('active');
+            
+            const content = document.getElementById(`tab-${tab}`);
+            if (content) content.classList.add('active');
+
+            // Load data based on tab
+            if (tab === 'orders') loadOrders();
+            if (tab === 'users') loadUsers();
+            if (tab === 'menu') loadMenuItems();
+        }
+
+        // ============================================
+        // ORDERS MANAGEMENT
+        // ============================================
+
         async function loadOrders() {
             try {
                 const supabase = window.supabaseClient;
-                if (!supabase) return;
-                
                 const { data, error } = await supabase
                     .from('orders')
                     .select('*')
                     .order('created_at', { ascending: false });
-                    
+
                 if (error) throw error;
-                
+
                 updateStats(data || []);
                 displayOrders(data || []);
             } catch (error) {
                 console.error('Error loading orders:', error);
-                document.getElementById('ordersList').innerHTML = `
-                    <p style="text-align: center; color: #f44336; padding: 20px;">
-                        <i class="fas fa-exclamation-circle"></i> Error loading orders: ${error.message}
-                    </p>
-                `;
+                showToast('Error loading orders', 'error');
             }
         }
 
-        // Update statistics
         function updateStats(orders) {
             const total = orders.length;
             const pending = orders.filter(o => o.status === 'pending' || o.status === 'preparing').length;
             const completed = orders.filter(o => o.status === 'delivered').length;
-            
+
             document.getElementById('totalOrders').textContent = total;
             document.getElementById('pendingOrders').textContent = pending;
             document.getElementById('completedOrders').textContent = completed;
-            document.getElementById('orderCount').textContent = `(${total} orders)`;
         }
 
-        // Update order status
-        async function updateOrderStatus(orderId, newStatus) {
-            try {
-                const supabase = window.supabaseClient;
-                if (!supabase) return;
-                
-                const { error } = await supabase
-                    .from('orders')
-                    .update({ status: newStatus })
-                    .eq('id', orderId);
-                    
-                if (error) throw error;
-                
-                showToast(`Order status updated to ${newStatus}`, 'success');
-                loadOrders(); // Refresh
-            } catch (error) {
-                console.error('Error updating status:', error);
-                showToast('Error updating status', 'error');
-            }
-        }
-
-        // Display orders
         function displayOrders(orders) {
             const container = document.getElementById('ordersList');
             if (!container) return;
-            
+
             if (orders.length === 0) {
                 container.innerHTML = `
-                    <p style="text-align: center; color: #999; padding: 20px;">
-                        <i class="fas fa-shopping-cart"></i> No orders yet
-                    </p>
+                    <div class="empty-state">
+                        <i class="fas fa-shopping-cart"></i>
+                        <p>No orders yet</p>
+                    </div>
                 `;
                 return;
             }
-            
+
             container.innerHTML = orders.map(order => `
                 <div class="order-item">
-                    <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 10px;">
                         <div>
                             <strong>${order.customer_name}</strong>
-                            <div style="font-size: 12px; color: #666;">
+                            <div style="font-size: 13px; color: #666;">
                                 <i class="fas fa-phone"></i> ${order.customer_phone}
                             </div>
-                            <div style="font-size: 12px; color: #666; margin-top: 2px;">
+                            <div style="font-size: 13px; color: #666; margin-top: 2px;">
                                 <i class="fas fa-map-marker-alt"></i> ${order.delivery_address}
+                            </div>
+                            <div style="font-size: 13px; color: #666; margin-top: 4px;">
+                                ${order.items.map(item => `${item.name} × ${item.quantity}`).join(' • ')}
                             </div>
                         </div>
                         <div style="text-align: right;">
                             <span class="order-status status-${order.status}">${order.status}</span>
-                            <span style="font-weight: 700; color: var(--primary-red); margin-left: 8px;">
+                            <div style="font-weight: 700; color: #D32F2F; margin-top: 4px;">
                                 K${order.total_amount.toFixed(2)}
-                            </span>
+                            </div>
+                            <div style="font-size: 11px; color: #999; margin-top: 2px;">
+                                ${new Date(order.created_at).toLocaleString()}
+                            </div>
                         </div>
                     </div>
-                    <div style="font-size: 13px; color: #666; margin-top: 6px;">
-                        ${order.items.map(item => `${item.name} × ${item.quantity}`).join(' • ')}
-                    </div>
-                    <div style="font-size: 11px; color: #999; margin-top: 4px;">
-                        📅 ${new Date(order.created_at).toLocaleString()}
-                        ${order.delivery_boy_id ? ` • 🚚 Assigned` : ''}
-                    </div>
-                    <div class="status-update">
-                        <select id="status-${order.id}" onchange="updateOrderStatus('${order.id}', this.value)">
+                    <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                        <select id="status-${order.id}" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px;">
                             <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                             <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
                             <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Ready</option>
                             <option value="delivering" ${order.status === 'delivering' ? 'selected' : ''}>Delivering</option>
                             <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
                         </select>
-                        <button onclick="updateOrderStatus('${order.id}', document.getElementById('status-${order.id}').value)">
+                        <button class="btn btn-primary" onclick="updateOrderStatus('${order.id}', document.getElementById('status-${order.id}').value)" style="padding: 6px 16px; font-size: 12px;">
                             <i class="fas fa-check"></i> Update
                         </button>
                     </div>
@@ -351,35 +827,397 @@
             `).join('');
         }
 
-        // Show toast notification
+        async function updateOrderStatus(orderId, status) {
+            try {
+                const supabase = window.supabaseClient;
+                const { error } = await supabase
+                    .from('orders')
+                    .update({ status: status })
+                    .eq('id', orderId);
+
+                if (error) throw error;
+
+                showToast('Order status updated!', 'success');
+                loadOrders();
+            } catch (error) {
+                console.error('Error updating status:', error);
+                showToast('Error updating status', 'error');
+            }
+        }
+
+        // ============================================
+        // USERS MANAGEMENT
+        // ============================================
+
+        async function loadUsers() {
+            try {
+                const supabase = window.supabaseClient;
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                document.getElementById('totalUsers').textContent = data?.length || 0;
+                displayUsers(data || []);
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        function displayUsers(users) {
+            const container = document.getElementById('usersList');
+            if (!container) return;
+
+            if (users.length === 0) {
+                container.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #999;">No users found</td></tr>`;
+                return;
+            }
+
+            container.innerHTML = users.map(user => `
+                <tr>
+                    <td><strong>${user.name || 'N/A'}</strong></td>
+                    <td>${user.email}</td>
+                    <td><span class="order-status status-${user.role}">${user.role}</span></td>
+                    <td>${user.phone || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteUser('${user.id}')" style="padding: 4px 12px; font-size: 12px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openAddUserModal() {
+            document.getElementById('addUserModal').classList.add('show');
+            document.getElementById('addUserForm').reset();
+        }
+
+        async function addUser(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('userName').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            const password = document.getElementById('userPassword').value;
+            const role = document.getElementById('userRole').value;
+            const phone = document.getElementById('userPhone').value.trim();
+
+            try {
+                const supabase = window.supabaseClient;
+
+                // Create auth user
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: email,
+                    password: password
+                });
+
+                if (authError) throw authError;
+
+                if (authData.user) {
+                    // Create user profile
+                    const { error: profileError } = await supabase
+                        .from('users')
+                        .insert([{
+                            id: authData.user.id,
+                            email: email,
+                            name: name,
+                            role: role,
+                            phone: phone
+                        }]);
+
+                    if (profileError) throw profileError;
+
+                    showToast('User created successfully!', 'success');
+                    closeModal('addUserModal');
+                    loadUsers();
+                }
+            } catch (error) {
+                console.error('Error creating user:', error);
+                showToast('Error creating user: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('Are you sure you want to delete this user?')) return;
+
+            try {
+                const supabase = window.supabaseClient;
+                const { error } = await supabase
+                    .from('users')
+                    .delete()
+                    .eq('id', userId);
+
+                if (error) throw error;
+
+                showToast('User deleted!', 'success');
+                loadUsers();
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showToast('Error deleting user', 'error');
+            }
+        }
+
+        // ============================================
+        // MENU MANAGEMENT
+        // ============================================
+
+        async function loadMenuItems() {
+            try {
+                const supabase = window.supabaseClient;
+                const { data, error } = await supabase
+                    .from('menu_items')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                document.getElementById('totalItems').textContent = data?.length || 0;
+                displayMenuItems(data || []);
+            } catch (error) {
+                console.error('Error loading menu:', error);
+            }
+        }
+
+        function displayMenuItems(items) {
+            const container = document.getElementById('menuItemsList');
+            if (!container) return;
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="fas fa-utensils"></i>
+                        <p>No menu items yet. Add your first item!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const emojiMap = {
+                'Grilled Chicken': '🍗',
+                'Beef Stew': '🥩',
+                'Fish Fry': '🐟',
+                'Vegetable Pasta': '🍝',
+                'Spring Rolls': '🌯',
+                'Samosa': '🥟',
+                'Garlic Bread': '🍞',
+                'Fresh Juice': '🧃',
+                'Soda': '🥤',
+                'Milkshake': '🥛',
+                'Chocolate Cake': '🍰',
+                'Ice Cream': '🍦'
+            };
+
+            container.innerHTML = items.map(item => {
+                const emoji = item.icon || emojiMap[item.name] || '🍽️';
+                return `
+                    <div class="menu-item-admin">
+                        <div class="image-preview">
+                            ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}">` : `<span style="font-size: 48px;">${emoji}</span>`}
+                        </div>
+                        <div class="item-info">
+                            <h4>${item.name} ${!item.available ? '🔴' : '✅'}</h4>
+                            <p>${item.description || 'No description'}</p>
+                            <div class="price">K${parseFloat(item.price).toFixed(2)}</div>
+                            <div style="font-size: 12px; color: #999; margin-top: 4px;">
+                                Category: ${item.category}
+                            </div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-primary" onclick="editMenuItem('${item.id}')" style="flex: 1;">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteMenuItem('${item.id}')" style="flex: 1;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Add menu item
+        async function addMenuItem(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('itemName').value.trim();
+            const price = parseFloat(document.getElementById('itemPrice').value);
+            const description = document.getElementById('itemDescription').value.trim();
+            const category = document.getElementById('itemCategory').value;
+            const icon = document.getElementById('itemIcon').value.trim() || '🍽️';
+            const image_url = document.getElementById('itemImage').value.trim();
+            const available = document.getElementById('itemAvailable').checked;
+
+            if (!name || !price) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+
+            try {
+                const supabase = window.supabaseClient;
+                const { data, error } = await supabase
+                    .from('menu_items')
+                    .insert([{
+                        name: name,
+                        price: price,
+                        description: description || null,
+                        category: category,
+                        icon: icon,
+                        image_url: image_url || null,
+                        available: available
+                    }])
+                    .select();
+
+                if (error) throw error;
+
+                showToast('Menu item added successfully!', 'success');
+                document.getElementById('addItemForm').reset();
+                document.getElementById('imagePreview').style.display = 'none';
+                loadMenuItems();
+                switchTab('menu');
+            } catch (error) {
+                console.error('Error adding item:', error);
+                showToast('Error adding item: ' + error.message, 'error');
+            }
+        }
+
+        // Edit menu item
+        async function editMenuItem(itemId) {
+            try {
+                const supabase = window.supabaseClient;
+                const { data, error } = await supabase
+                    .from('menu_items')
+                    .select('*')
+                    .eq('id', itemId)
+                    .single();
+
+                if (error) throw error;
+
+                document.getElementById('editItemId').value = data.id;
+                document.getElementById('editItemName').value = data.name;
+                document.getElementById('editItemPrice').value = data.price;
+                document.getElementById('editItemDescription').value = data.description || '';
+                document.getElementById('editItemCategory').value = data.category;
+                document.getElementById('editItemIcon').value = data.icon || '';
+                document.getElementById('editItemImage').value = data.image_url || '';
+                document.getElementById('editItemAvailable').checked = data.available;
+
+                if (data.image_url) {
+                    const preview = document.getElementById('editImagePreview');
+                    preview.src = data.image_url;
+                    preview.style.display = 'block';
+                } else {
+                    document.getElementById('editImagePreview').style.display = 'none';
+                }
+
+                document.getElementById('editItemModal').classList.add('show');
+            } catch (error) {
+                console.error('Error loading item:', error);
+                showToast('Error loading item', 'error');
+            }
+        }
+
+        async function updateMenuItem(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('editItemId').value;
+            const name = document.getElementById('editItemName').value.trim();
+            const price = parseFloat(document.getElementById('editItemPrice').value);
+            const description = document.getElementById('editItemDescription').value.trim();
+            const category = document.getElementById('editItemCategory').value;
+            const icon = document.getElementById('editItemIcon').value.trim() || '🍽️';
+            const image_url = document.getElementById('editItemImage').value.trim();
+            const available = document.getElementById('editItemAvailable').checked;
+
+            try {
+                const supabase = window.supabaseClient;
+                const { error } = await supabase
+                    .from('menu_items')
+                    .update({
+                        name: name,
+                        price: price,
+                        description: description || null,
+                        category: category,
+                        icon: icon,
+                        image_url: image_url || null,
+                        available: available
+                    })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showToast('Item updated successfully!', 'success');
+                closeModal('editItemModal');
+                loadMenuItems();
+            } catch (error) {
+                console.error('Error updating item:', error);
+                showToast('Error updating item', 'error');
+            }
+        }
+
+        async function deleteMenuItem(itemId) {
+            const id = itemId || document.getElementById('editItemId').value;
+            if (!confirm('Are you sure you want to delete this item?')) return;
+
+            try {
+                const supabase = window.supabaseClient;
+                const { error } = await supabase
+                    .from('menu_items')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showToast('Item deleted!', 'success');
+                closeModal('editItemModal');
+                loadMenuItems();
+            } catch (error) {
+                console.error('Error deleting item:', error);
+                showToast('Error deleting item', 'error');
+            }
+        }
+
+        // Image preview
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('itemImage').addEventListener('input', function() {
+                const preview = document.getElementById('imagePreview');
+                if (this.value) {
+                    preview.src = this.value;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+
+            document.getElementById('editItemImage').addEventListener('input', function() {
+                const preview = document.getElementById('editImagePreview');
+                if (this.value) {
+                    preview.src = this.value;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+        });
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
         function showToast(message, type = 'info') {
             const existing = document.querySelector('.toast');
             if (existing) existing.remove();
-            
+
             const toast = document.createElement('div');
-            let bgColor = '#2196F3';
-            if (type === 'success') bgColor = '#4CAF50';
-            if (type === 'error') bgColor = '#f44336';
-            
-            toast.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: ${bgColor};
-                color: white;
-                padding: 12px 24px;
-                border-radius: 12px;
-                font-weight: 500;
-                z-index: 1000;
-                animation: slideDown 0.3s ease;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                max-width: 90%;
-                text-align: center;
-            `;
+            toast.className = `toast ${type}`;
             toast.textContent = message;
             document.body.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.3s ease';
@@ -387,21 +1225,14 @@
             }, 3000);
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🔐 Admin Dashboard Loading...');
-            const isAuth = await checkAdminAuth();
-            if (isAuth) {
-                loadOrders();
-                // Refresh every 30 seconds
-                setInterval(loadOrders, 30000);
-            }
-        });
+        function refreshData() {
+            showToast('Refreshing data...', 'info');
+            loadOrders();
+            loadUsers();
+            loadMenuItems();
+        }
 
-        // Make functions global
-        window.loadOrders = loadOrders;
-        window.updateOrderStatus = updateOrderStatus;
-        window.logout = async function() {
+        async function logout() {
             try {
                 const supabase = window.supabaseClient;
                 if (supabase) {
@@ -412,7 +1243,33 @@
             }
             localStorage.clear();
             window.location.href = 'login.html';
-        };
+        }
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🔐 Admin Dashboard Loading...');
+            const isAuth = await checkAdminAuth();
+            if (isAuth) {
+                loadOrders();
+                loadUsers();
+                loadMenuItems();
+
+                // Auto refresh every 30 seconds
+                setInterval(refreshData, 30000);
+            }
+        });
+
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
     </script>
 </body>
 </html>
