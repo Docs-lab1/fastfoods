@@ -6,13 +6,29 @@ let currentMenuItems = [];
 let currentCategory = 'all';
 let map = null;
 let marker = null;
+let userLocation = null;
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     loadMenuItems();
     setupEventListeners();
     loadCartFromStorage();
+    
+    // Check if user is logged in
+    checkAuth();
 });
+
+// Check authentication
+async function checkAuth() {
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+            console.log('User logged in:', user.email);
+        }
+    } catch (error) {
+        console.log('Not logged in');
+    }
+}
 
 // Load menu items from Supabase
 async function loadMenuItems(category = 'all') {
@@ -27,40 +43,20 @@ async function loadMenuItems(category = 'all') {
             query = query.eq('category', category);
         }
 
-        const { data, error } = await query;
+        const { data, error } = await query.order('name');
         
         if (error) throw error;
         
-        currentMenuItems = data;
-        displayMenuItems(data);
+        currentMenuItems = data || [];
+        displayMenuItems(data || []);
     } catch (error) {
         console.error('Error loading menu:', error);
         showToast('Error loading menu items', 'error');
-        // Use sample data if Supabase fails
-        displaySampleMenu();
+        // Show empty state
+        displayMenuItems([]);
     } finally {
         showLoading(false);
     }
-}
-
-// Display sample menu (fallback)
-function displaySampleMenu() {
-    const sampleItems = [
-        { id: 1, name: 'Grilled Chicken', description: 'With special sauce', price: 150, category: 'main', icon: '🍗' },
-        { id: 2, name: 'Beef Stew', description: 'Tender beef with vegetables', price: 180, category: 'main', icon: '🥩' },
-        { id: 3, name: 'Fish Fry', description: 'Crispy fried fish', price: 120, category: 'main', icon: '🐟' },
-        { id: 4, name: 'Spring Rolls', description: 'Crispy vegetable rolls', price: 60, category: 'appetizer', icon: '🌯' },
-        { id: 5, name: 'Samosa', description: 'Spiced potato filling', price: 40, category: 'appetizer', icon: '🥟' },
-        { id: 6, name: 'Fresh Juice', description: 'Seasonal fruits', price: 35, category: 'drinks', icon: '🧃' },
-        { id: 7, name: 'Soda', description: 'Assorted flavors', price: 25, category: 'drinks', icon: '🥤' },
-        { id: 8, name: 'Chocolate Cake', description: 'Rich chocolate', price: 50, category: 'dessert', icon: '🍰' }
-    ];
-    
-    const filtered = currentCategory === 'all' 
-        ? sampleItems 
-        : sampleItems.filter(item => item.category === currentCategory);
-    
-    displayMenuItems(filtered);
 }
 
 // Display menu items in grid
@@ -68,38 +64,54 @@ function displayMenuItems(items) {
     const grid = document.getElementById('menuGrid');
     if (!grid) return;
     
-    if (items.length === 0) {
+    if (!items || items.length === 0) {
         grid.innerHTML = `
-            <div class="no-items">
-                <i class="fas fa-utensils"></i>
-                <p>No items available in this category</p>
+            <div class="no-items" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                <i class="fas fa-utensils" style="font-size: 48px; color: #ccc;"></i>
+                <p style="color: #999; margin-top: 12px;">No items available in this category</p>
             </div>
         `;
         return;
     }
     
-    grid.innerHTML = items.map(item => `
+    const emojiMap = {
+        'Grilled Chicken': '🍗',
+        'Beef Stew': '🥩',
+        'Fish Fry': '🐟',
+        'Vegetable Pasta': '🍝',
+        'Spring Rolls': '🌯',
+        'Samosa': '🥟',
+        'Garlic Bread': '🍞',
+        'Fresh Juice': '🧃',
+        'Soda': '🥤',
+        'Milkshake': '🥛',
+        'Chocolate Cake': '🍰',
+        'Ice Cream': '🍦'
+    };
+    
+    grid.innerHTML = items.map(item => {
+        const emoji = emojiMap[item.name] || '🍽️';
+        return `
         <div class="menu-item" data-id="${item.id}">
             <div class="menu-item-image">
-                ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}">` : 
-                  `<span style="font-size: 40px;">${item.icon || '🍽️'}</span>`}
+                <span style="font-size: 48px;">${emoji}</span>
             </div>
             <div class="menu-item-content">
                 <h4>${item.name}</h4>
-                <p>${item.description || ''}</p>
+                <p>${item.description || 'Delicious meal'}</p>
                 <div class="menu-item-footer">
-                    <span class="menu-item-price">K${item.price.toFixed(2)}</span>
-                    <button class="add-to-cart-btn" onclick="addToCart('${item.id}', '${item.name}', ${item.price})">
+                    <span class="menu-item-price">K${parseFloat(item.price).toFixed(2)}</span>
+                    <button class="add-to-cart-btn" onclick="addToCart('${item.id}', '${item.name}', ${parseFloat(item.price)})">
                         <i class="fas fa-plus"></i> Add
                     </button>
                 </div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
-// Add to cart
-function addToCart(id, name, price) {
+// Add to cart function (make it global)
+window.addToCart = function(id, name, price) {
     const existing = cart.find(item => item.id === id);
     
     if (existing) {
@@ -110,25 +122,27 @@ function addToCart(id, name, price) {
     
     updateCartUI();
     saveCartToStorage();
-    showToast(`${name} added to cart!`, 'success');
-}
+    showToast(`${name} added to cart! 🛒`, 'success');
+};
 
 // Update cart UI
 function updateCartUI() {
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-    document.getElementById('cartCount').textContent = count;
+    const cartCount = document.getElementById('cartCount');
+    if (cartCount) cartCount.textContent = count;
     
     const cartItems = document.getElementById('cartItems');
     if (!cartItems) return;
     
     if (cart.length === 0) {
         cartItems.innerHTML = `
-            <div class="empty-cart">
+            <div class="empty-cart" style="text-align: center; padding: 40px 0;">
                 <i class="fas fa-shopping-cart" style="font-size: 48px; color: #ccc;"></i>
                 <p style="color: #999; margin-top: 8px;">Your cart is empty</p>
             </div>
         `;
-        document.getElementById('cartTotal').textContent = 'K0.00';
+        const totalEl = document.getElementById('cartTotal');
+        if (totalEl) totalEl.textContent = 'K0.00';
         return;
     }
     
@@ -147,11 +161,12 @@ function updateCartUI() {
     `).join('');
     
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    document.getElementById('cartTotal').textContent = `K${total.toFixed(2)}`;
+    const totalEl = document.getElementById('cartTotal');
+    if (totalEl) totalEl.textContent = `K${total.toFixed(2)}`;
 }
 
-// Update quantity
-function updateQuantity(id, change) {
+// Update quantity (make it global)
+window.updateQuantity = function(id, change) {
     const item = cart.find(i => i.id === id);
     if (!item) return;
     
@@ -163,30 +178,30 @@ function updateQuantity(id, change) {
     
     updateCartUI();
     saveCartToStorage();
-}
+};
 
 // Toggle cart
-function toggleCart() {
+window.toggleCart = function() {
     const sidebar = document.getElementById('cartSidebar');
-    sidebar.classList.toggle('open');
-}
+    if (sidebar) sidebar.classList.toggle('open');
+};
 
 // Proceed to checkout
-function proceedToCheckout() {
+window.proceedToCheckout = function() {
     if (cart.length === 0) {
         showToast('Your cart is empty!', 'error');
         return;
     }
     
     toggleCart();
-    document.getElementById('checkoutModal').classList.add('show');
+    const modal = document.getElementById('checkoutModal');
+    if (modal) modal.classList.add('show');
     initializeMap();
-}
+};
 
 // Initialize Google Map
 function initializeMap() {
     const mapContainer = document.getElementById('mapContainer');
-    
     if (!mapContainer) return;
     
     // Default location (Kasama District)
@@ -195,7 +210,7 @@ function initializeMap() {
     if (typeof google !== 'undefined' && google.maps) {
         map = new google.maps.Map(mapContainer, {
             center: defaultLocation,
-            zoom: 15,
+            zoom: 14,
             styles: [
                 {
                     featureType: 'all',
@@ -208,7 +223,8 @@ function initializeMap() {
         marker = new google.maps.Marker({
             position: defaultLocation,
             map: map,
-            draggable: true
+            draggable: true,
+            animation: google.maps.Animation.DROP
         });
         
         // Update address when marker is dragged
@@ -220,42 +236,50 @@ function initializeMap() {
 }
 
 // Get current location
-function getCurrentLocation() {
+window.getCurrentLocation = function() {
     if (!navigator.geolocation) {
         showToast('Geolocation is not supported', 'error');
         return;
     }
     
+    showToast('Getting your location...', 'info');
+    
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const { latitude, longitude } = position.coords;
+            userLocation = { lat: latitude, lng: longitude };
             
             if (map && marker) {
                 const pos = { lat: latitude, lng: longitude };
                 map.setCenter(pos);
+                map.setZoom(16);
                 marker.setPosition(pos);
                 getAddressFromCoords(latitude, longitude);
             }
             
-            showToast('Location updated!', 'success');
+            showToast('Location updated! 📍', 'success');
         },
         (error) => {
-            showToast('Error getting location', 'error');
-            console.error(error);
+            console.error('Geolocation error:', error);
+            showToast('Error getting location. Please enter address manually.', 'error');
         },
-        { enableHighAccuracy: true }
+        { enableHighAccuracy: true, timeout: 10000 }
     );
-}
+};
 
 // Get address from coordinates
 function getAddressFromCoords(lat, lng) {
-    // Reverse geocoding using Google Maps API
+    if (typeof google === 'undefined' || !google.maps) {
+        return;
+    }
+    
     const geocoder = new google.maps.Geocoder();
     const latlng = { lat, lng };
     
     geocoder.geocode({ location: latlng }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-            document.getElementById('deliveryAddress').value = results[0].formatted_address;
+        if (status === 'OK' && results && results[0]) {
+            const addressEl = document.getElementById('deliveryAddress');
+            if (addressEl) addressEl.value = results[0].formatted_address;
         }
     });
 }
@@ -264,9 +288,9 @@ function getAddressFromCoords(lat, lng) {
 async function placeOrder(event) {
     event.preventDefault();
     
-    const name = document.getElementById('customerName').value;
-    const phone = document.getElementById('customerPhone').value;
-    const address = document.getElementById('deliveryAddress').value;
+    const name = document.getElementById('customerName')?.value;
+    const phone = document.getElementById('customerPhone')?.value;
+    const address = document.getElementById('deliveryAddress')?.value;
     
     if (!name || !phone || !address) {
         showToast('Please fill in all required fields', 'error');
@@ -280,7 +304,14 @@ async function placeOrder(event) {
             customer_name: name,
             customer_phone: phone,
             delivery_address: address,
-            items: cart,
+            latitude: userLocation?.lat || null,
+            longitude: userLocation?.lng || null,
+            items: cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price
+            })),
             total_amount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
             status: 'pending'
         };
@@ -301,7 +332,8 @@ async function placeOrder(event) {
         closeModal('checkoutModal');
         
         // Reset form
-        document.getElementById('checkoutForm').reset();
+        const form = document.getElementById('checkoutForm');
+        if (form) form.reset();
         
     } catch (error) {
         console.error('Error placing order:', error);
@@ -314,6 +346,7 @@ async function placeOrder(event) {
 // Show/hide loading
 function showLoading(show) {
     const overlay = document.getElementById('loadingOverlay');
+    if (!overlay) return;
     if (show) {
         overlay.classList.add('show');
     } else {
@@ -329,7 +362,7 @@ function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
-        <div class="toast-content">
+        <div class="toast-content" style="display: flex; align-items: center; gap: 8px;">
             <span>${message}</span>
         </div>
     `;
@@ -338,42 +371,45 @@ function showToast(message, type = 'info') {
     
     setTimeout(() => {
         toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
 // Navigation
-function navigateTo(page) {
-    // Update active nav
-    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-    event.target.closest('.nav-item').classList.add('active');
+window.navigateTo = function(page) {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(btn => btn.classList.remove('active'));
+    const clickedBtn = event?.target?.closest('.nav-item');
+    if (clickedBtn) clickedBtn.classList.add('active');
     
-    // Handle navigation
+    // Handle navigation logic here
     switch(page) {
         case 'home':
-            // Show home content
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             break;
         case 'menu':
-            // Show menu
+            document.getElementById('menuSection')?.scrollIntoView({ behavior: 'smooth' });
             break;
         case 'orders':
-            // Show orders
+            showToast('Orders feature coming soon!', 'info');
             break;
         case 'profile':
-            // Show profile
+            showToast('Profile feature coming soon!', 'info');
             break;
     }
-}
+};
 
 // Show menu
-function showMenu() {
-    document.getElementById('menuSection').scrollIntoView({ behavior: 'smooth' });
-}
+window.showMenu = function() {
+    document.getElementById('menuSection')?.scrollIntoView({ behavior: 'smooth' });
+};
 
 // Close modal
-function closeModal(id) {
-    document.getElementById(id).classList.remove('show');
-}
+window.closeModal = function(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.remove('show');
+};
 
 // Save cart to localStorage
 function saveCartToStorage() {
@@ -384,8 +420,12 @@ function saveCartToStorage() {
 function loadCartFromStorage() {
     const saved = localStorage.getItem('cart');
     if (saved) {
-        cart = JSON.parse(saved);
-        updateCartUI();
+        try {
+            cart = JSON.parse(saved);
+            updateCartUI();
+        } catch (e) {
+            cart = [];
+        }
     }
 }
 
@@ -404,7 +444,8 @@ function setupEventListeners() {
     });
     
     // Checkout form
-    document.getElementById('checkoutForm').addEventListener('submit', placeOrder);
+    const form = document.getElementById('checkoutForm');
+    if (form) form.addEventListener('submit', placeOrder);
     
     // Close modal on overlay click
     document.querySelectorAll('.modal').forEach(modal => {
@@ -415,43 +456,3 @@ function setupEventListeners() {
         });
     });
 }
-
-// Add toast styles
-const toastStyles = `
-    .toast {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 12px 24px;
-        border-radius: 12px;
-        color: white;
-        font-weight: 500;
-        z-index: 1000;
-        max-width: 90%;
-        animation: slideDown 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    .toast.success { background: #4CAF50; }
-    .toast.error { background: #f44336; }
-    .toast.info { background: #2196F3; }
-    @keyframes slideDown {
-        from { transform: translateX(-50%) translateY(-100px); opacity: 0; }
-        to { transform: translateX(-50%) translateY(0); opacity: 1; }
-    }
-    .no-items {
-        text-align: center;
-        padding: 40px;
-        color: #999;
-        grid-column: 1 / -1;
-    }
-    .no-items i { font-size: 48px; margin-bottom: 12px; }
-    .empty-cart {
-        text-align: center;
-        padding: 40px 0;
-    }
-`;
-
-const styleSheet = document.createElement('style');
-styleSheet.textContent = toastStyles;
-document.head.appendChild(styleSheet);
