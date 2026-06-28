@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chikorlando - Profile</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .profile-page {
+            background: #f5f5f5;
+            min-height: 100vh;
+            color: #333;
+        }
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-red));
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin: 0 auto 12px;
+            border: 3px solid white;
+        }
+        .profile-header h1 {
+            font-size: 22px;
+        }
+        .profile-header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+        .profile-content {
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+        .profile-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .profile-card .label {
+            color: #999;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .profile-card .value {
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+        .menu-item-profile {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .menu-item-profile:hover {
+            background: #f9f9f9;
+        }
+        .menu-item-profile:last-child {
+            border-bottom: none;
+        }
+        .menu-item-profile i {
+            color: var(--primary-red);
+            width: 24px;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+        .logout-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+        .logout-btn:hover {
+            background: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-page">
+        <div class="profile-header" style="position: relative;">
+            <button class="back-btn" onclick="window.location.href='index.html'">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+            <div class="profile-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <h1 id="userName">Guest User</h1>
+            <p id="userEmail">Not logged in</p>
+        </div>
+
+        <div class="profile-content">
+            <div class="profile-card">
+                <div class="label">Account Type</div>
+                <div class="value">Customer</div>
+            </div>
+
+            <div class="profile-card">
+                <div class="label">Quick Actions</div>
+                <div class="menu-item-profile" onclick="window.location.href='menu.html'">
+                    <span><i class="fas fa-utensils"></i> Browse Menu</span>
+                    <i class="fas fa-chevron-right" style="color: #ccc;"></i>
+                </div>
+                <div class="menu-item-profile" onclick="window.location.href='orders.html'">
+                    <span><i class="fas fa-list"></i> My Orders</span>
+                    <i class="fas fa-chevron-right" style="color: #ccc;"></i>
+                </div>
+                <div class="menu-item-profile" onclick="showCart()">
+                    <span><i class="fas fa-shopping-cart"></i> View Cart</span>
+                    <i class="fas fa-chevron-right" style="color: #ccc;"></i>
+                </div>
+            </div>
+
+            <div class="profile-card">
+                <div class="label">About</div>
+                <div style="margin-top: 8px; line-height: 1.6; color: #666; font-size: 14px;">
+                    <p><strong>Chikorlando Restaurant</strong></p>
+                    <p>📍 Kasama District</p>
+                    <p>📞 +260 977 123 456</p>
+                    <p>🍽️ Serving delicious meals since 2024</p>
+                </div>
+            </div>
+
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Load user info from localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const name = localStorage.getItem('customerName') || 'Guest User';
+            document.getElementById('userName').textContent = name;
+            
+            // Check if user has orders
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            if (cartCount > 0) {
+                // Show cart count in UI if needed
+            }
+        });
+
+        function showCart() {
+            window.location.href = 'index.html';
+            // Will trigger cart opening
+            setTimeout(() => {
+                const cartBtn = document.querySelector('.cart-btn');
+                if (cartBtn) cartBtn.click();
+            }, 500);
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('customerName');
+                localStorage.removeItem('cart');
+                localStorage.removeItem('cartCount');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>
