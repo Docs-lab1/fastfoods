@@ -11,7 +11,6 @@
     <div class="app-container">
         <!-- Header -->
         <header class="header">
-        
             <div class="header-top">
                 <div class="logo-container">
                     <i class="fas fa-utensils"></i>
@@ -22,8 +21,9 @@
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count" id="cartCount">0</span>
                     </button>
-                    <!-- User Icon - Now Functional -->
-                   
+                    <button class="cart-btn" id="userBtn" onclick="handleUserAction()">
+                        <i class="fas fa-user" id="userIcon"></i>
+                    </button>
                 </div>
             </div>
             <div class="header-bottom">
@@ -85,7 +85,7 @@
             </div>
         </main>
 
-        <!-- Bottom Navigation -->
+        <!-- Bottom Navigation - Orders REMOVED -->
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="window.location.href='index.html'">
                 <i class="fas fa-home"></i>
@@ -94,10 +94,6 @@
             <button class="nav-item" onclick="window.location.href='menu.html'">
                 <i class="fas fa-utensils"></i>
                 <span>Menu</span>
-            </button>
-            <button class="nav-item" onclick="window.location.href='orders.html'">
-                <i class="fas fa-list"></i>
-                <span>Orders</span>
             </button>
             <button class="nav-item" onclick="window.location.href='login.html'">
                 <i class="fas fa-sign-in-alt"></i>
@@ -149,44 +145,5 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <script src="script.js"></script>
-    
-    <!-- User Icon Handler -->
-    <script>
-        // Handle user icon click based on login status
-        function handleUserAction() {
-            const userRole = localStorage.getItem('userRole');
-            
-            if (userRole === 'admin') {
-                window.location.href = 'admin.html';
-            } else if (userRole === 'delivery') {
-                window.location.href = 'delivery.html';
-            } else if (userRole === 'customer') {
-                window.location.href = 'profile.html';
-            } else {
-                window.location.href = 'login.html';
-            }
-        }
-
-        // Update user icon based on login status
-        document.addEventListener('DOMContentLoaded', function() {
-            const userRole = localStorage.getItem('userRole');
-            const userIcon = document.getElementById('userIcon');
-            const userBtn = document.getElementById('userBtn');
-            
-            if (userRole === 'admin') {
-                userIcon.className = 'fas fa-user-shield';
-                userBtn.style.background = 'rgba(255,215,0,0.3)';
-            } else if (userRole === 'delivery') {
-                userIcon.className = 'fas fa-truck';
-                userBtn.style.background = 'rgba(76, 175, 80, 0.3)';
-            } else if (userRole === 'customer') {
-                userIcon.className = 'fas fa-user-check';
-                userBtn.style.background = 'rgba(33, 150, 243, 0.3)';
-            } else {
-                userIcon.className = 'fas fa-user';
-                userBtn.style.background = 'rgba(255,255,255,0.2)';
-            }
-        });
-    </script>
 </body>
 </html>
