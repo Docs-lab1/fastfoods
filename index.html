@@ -21,6 +21,10 @@
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count" id="cartCount">0</span>
                     </button>
+                    <!-- User Icon - Now Functional -->
+                    <button class="cart-btn" id="userBtn" onclick="handleUserAction()">
+                        <i class="fas fa-user" id="userIcon"></i>
+                    </button>
                 </div>
             </div>
             <div class="header-bottom">
@@ -82,7 +86,7 @@
             </div>
         </main>
 
-        <!-- Bottom Navigation - UPDATED -->
+        <!-- Bottom Navigation -->
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="window.location.href='index.html'">
                 <i class="fas fa-home"></i>
@@ -146,27 +150,44 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <script src="script.js"></script>
-
-
-
-
+    
+    <!-- User Icon Handler -->
     <script>
-    // Check if user is logged in and update nav
-    document.addEventListener('DOMContentLoaded', function() {
-        const userRole = localStorage.getItem('userRole');
-        const loginBtn = document.querySelector('.nav-item:last-child');
-        
-        if (userRole === 'admin') {
-            loginBtn.innerHTML = '<i class="fas fa-user-shield"></i><span>Admin</span>';
-            loginBtn.onclick = function() { window.location.href = 'admin.html'; };
-        } else if (userRole === 'delivery') {
-            loginBtn.innerHTML = '<i class="fas fa-truck"></i><span>Delivery</span>';
-            loginBtn.onclick = function() { window.location.href = 'delivery.html'; };
-        } else if (userRole) {
-            loginBtn.innerHTML = '<i class="fas fa-user"></i><span>Profile</span>';
-            loginBtn.onclick = function() { window.location.href = 'profile.html'; };
+        // Handle user icon click based on login status
+        function handleUserAction() {
+            const userRole = localStorage.getItem('userRole');
+            
+            if (userRole === 'admin') {
+                window.location.href = 'admin.html';
+            } else if (userRole === 'delivery') {
+                window.location.href = 'delivery.html';
+            } else if (userRole === 'customer') {
+                window.location.href = 'profile.html';
+            } else {
+                window.location.href = 'login.html';
+            }
         }
-    });
-</script>
+
+        // Update user icon based on login status
+        document.addEventListener('DOMContentLoaded', function() {
+            const userRole = localStorage.getItem('userRole');
+            const userIcon = document.getElementById('userIcon');
+            const userBtn = document.getElementById('userBtn');
+            
+            if (userRole === 'admin') {
+                userIcon.className = 'fas fa-user-shield';
+                userBtn.style.background = 'rgba(255,215,0,0.3)';
+            } else if (userRole === 'delivery') {
+                userIcon.className = 'fas fa-truck';
+                userBtn.style.background = 'rgba(76, 175, 80, 0.3)';
+            } else if (userRole === 'customer') {
+                userIcon.className = 'fas fa-user-check';
+                userBtn.style.background = 'rgba(33, 150, 243, 0.3)';
+            } else {
+                userIcon.className = 'fas fa-user';
+                userBtn.style.background = 'rgba(255,255,255,0.2)';
+            }
+        });
+    </script>
 </body>
 </html>
