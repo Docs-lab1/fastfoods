@@ -1,40 +1,35 @@
-import { supabaseClient } from './config.js';
+// ============================================
+// CHIKORLANDO RESTAURANT - MAIN SCRIPT
+// ============================================
 
 // Global variables
 let cart = [];
-let currentMenuItems = [];
 let currentCategory = 'all';
 let map = null;
 let marker = null;
 let userLocation = null;
 
 // Initialize App
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Chikorlando App Initializing...');
     loadMenuItems();
-    setupEventListeners();
     loadCartFromStorage();
-    
-    // Check if user is logged in
-    checkAuth();
+    updateCartUI();
 });
-
-// Check authentication
-async function checkAuth() {
-    try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (user) {
-            console.log('User logged in:', user.email);
-        }
-    } catch (error) {
-        console.log('Not logged in');
-    }
-}
 
 // Load menu items from Supabase
 async function loadMenuItems(category = 'all') {
     try {
         showLoading(true);
-        let query = supabaseClient
+        const supabase = window.supabaseClient;
+        
+        if (!supabase) {
+            console.error('❌ Supabase not initialized!');
+            showToast('Error: Supabase not configured', 'error');
+            return;
+        }
+        
+        let query = supabase
             .from('menu_items')
             .select('*')
             .eq('available', true);
@@ -47,12 +42,11 @@ async function loadMenuItems(category = 'all') {
         
         if (error) throw error;
         
-        currentMenuItems = data || [];
+        console.log(`✅ Loaded ${data?.length || 0} menu items`);
         displayMenuItems(data || []);
     } catch (error) {
         console.error('Error loading menu:', error);
         showToast('Error loading menu items', 'error');
-        // Show empty state
         displayMenuItems([]);
     } finally {
         showLoading(false);
@@ -68,7 +62,10 @@ function displayMenuItems(items) {
         grid.innerHTML = `
             <div class="no-items" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
                 <i class="fas fa-utensils" style="font-size: 48px; color: #ccc;"></i>
-                <p style="color: #999; margin-top: 12px;">No items available in this category</p>
+                <p style="color: #999; margin-top: 12px;">No items available</p>
+                <button onclick="loadMenuItems()" style="margin-top: 12px; background: var(--primary-red); color: white; border: none; padding: 8px 20px; border-radius: 50px; cursor: pointer;">
+                    <i class="fas fa-refresh"></i> Retry
+                </button>
             </div>
         `;
         return;
@@ -110,8 +107,8 @@ function displayMenuItems(items) {
     `}).join('');
 }
 
-// Add to cart function (make it global)
-window.addToCart = function(id, name, price) {
+// Add to cart function
+function addToCart(id, name, price) {
     const existing = cart.find(item => item.id === id);
     
     if (existing) {
@@ -123,13 +120,16 @@ window.addToCart = function(id, name, price) {
     updateCartUI();
     saveCartToStorage();
     showToast(`${name} added to cart! 🛒`, 'success');
-};
+}
 
 // Update cart UI
 function updateCartUI() {
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
     const cartCount = document.getElementById('cartCount');
     if (cartCount) cartCount.textContent = count;
+    
+    // Update cart count in localStorage
+    localStorage.setItem('cartCount', count);
     
     const cartItems = document.getElementById('cartItems');
     if (!cartItems) return;
@@ -165,8 +165,8 @@ function updateCartUI() {
     if (totalEl) totalEl.textContent = `K${total.toFixed(2)}`;
 }
 
-// Update quantity (make it global)
-window.updateQuantity = function(id, change) {
+// Update quantity
+function updateQuantity(id, change) {
     const item = cart.find(i => i.id === id);
     if (!item) return;
     
@@ -178,16 +178,24 @@ window.updateQuantity = function(id, change) {
     
     updateCartUI();
     saveCartToStorage();
-};
+}
+
+// Filter category
+function filterCategory(category, btn) {
+    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    currentCategory = category;
+    loadMenuItems(category);
+}
 
 // Toggle cart
-window.toggleCart = function() {
+function toggleCart() {
     const sidebar = document.getElementById('cartSidebar');
     if (sidebar) sidebar.classList.toggle('open');
-};
+}
 
 // Proceed to checkout
-window.proceedToCheckout = function() {
+function proceedToCheckout() {
     if (cart.length === 0) {
         showToast('Your cart is empty!', 'error');
         return;
@@ -197,7 +205,7 @@ window.proceedToCheckout = function() {
     const modal = document.getElementById('checkoutModal');
     if (modal) modal.classList.add('show');
     initializeMap();
-};
+}
 
 // Initialize Google Map
 function initializeMap() {
@@ -227,16 +235,17 @@ function initializeMap() {
             animation: google.maps.Animation.DROP
         });
         
-        // Update address when marker is dragged
-        marker.addListener('dragend', () => {
+        marker.addListener('dragend', function() {
             const pos = marker.getPosition();
             getAddressFromCoords(pos.lat(), pos.lng());
         });
+    } else {
+        console.warn('⚠️ Google Maps not loaded');
     }
 }
 
 // Get current location
-window.getCurrentLocation = function() {
+function getCurrentLocation() {
     if (!navigator.geolocation) {
         showToast('Geolocation is not supported', 'error');
         return;
@@ -245,7 +254,7 @@ window.getCurrentLocation = function() {
     showToast('Getting your location...', 'info');
     
     navigator.geolocation.getCurrentPosition(
-        (position) => {
+        function(position) {
             const { latitude, longitude } = position.coords;
             userLocation = { lat: latitude, lng: longitude };
             
@@ -259,13 +268,13 @@ window.getCurrentLocation = function() {
             
             showToast('Location updated! 📍', 'success');
         },
-        (error) => {
+        function(error) {
             console.error('Geolocation error:', error);
             showToast('Error getting location. Please enter address manually.', 'error');
         },
         { enableHighAccuracy: true, timeout: 10000 }
     );
-};
+}
 
 // Get address from coordinates
 function getAddressFromCoords(lat, lng) {
@@ -276,7 +285,7 @@ function getAddressFromCoords(lat, lng) {
     const geocoder = new google.maps.Geocoder();
     const latlng = { lat, lng };
     
-    geocoder.geocode({ location: latlng }, (results, status) => {
+    geocoder.geocode({ location: latlng }, function(results, status) {
         if (status === 'OK' && results && results[0]) {
             const addressEl = document.getElementById('deliveryAddress');
             if (addressEl) addressEl.value = results[0].formatted_address;
@@ -299,6 +308,11 @@ async function placeOrder(event) {
     
     try {
         showLoading(true);
+        const supabase = window.supabaseClient;
+        
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
         
         const orderData = {
             customer_name: name,
@@ -316,12 +330,15 @@ async function placeOrder(event) {
             status: 'pending'
         };
         
-        const { data, error } = await supabaseClient
+        const { data, error } = await supabase
             .from('orders')
             .insert([orderData])
             .select();
             
         if (error) throw error;
+        
+        // Save customer name for orders page
+        localStorage.setItem('customerName', name);
         
         showToast('Order placed successfully! 🎉', 'success');
         
@@ -361,12 +378,28 @@ function showToast(message, type = 'info') {
     
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `
-        <div class="toast-content" style="display: flex; align-items: center; gap: 8px;">
-            <span>${message}</span>
-        </div>
-    `;
     
+    let bgColor = '#2196F3';
+    if (type === 'success') bgColor = '#4CAF50';
+    if (type === 'error') bgColor = '#f44336';
+    
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${bgColor};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 500;
+        z-index: 1000;
+        animation: slideDown 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        max-width: 90%;
+        text-align: center;
+    `;
+    toast.textContent = message;
     document.body.appendChild(toast);
     
     setTimeout(() => {
@@ -376,40 +409,16 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// Navigation
-window.navigateTo = function(page) {
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(btn => btn.classList.remove('active'));
-    const clickedBtn = event?.target?.closest('.nav-item');
-    if (clickedBtn) clickedBtn.classList.add('active');
-    
-    // Handle navigation logic here
-    switch(page) {
-        case 'home':
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            break;
-        case 'menu':
-            document.getElementById('menuSection')?.scrollIntoView({ behavior: 'smooth' });
-            break;
-        case 'orders':
-            showToast('Orders feature coming soon!', 'info');
-            break;
-        case 'profile':
-            showToast('Profile feature coming soon!', 'info');
-            break;
-    }
-};
-
 // Show menu
-window.showMenu = function() {
+function showMenu() {
     document.getElementById('menuSection')?.scrollIntoView({ behavior: 'smooth' });
-};
+}
 
 // Close modal
-window.closeModal = function(id) {
+function closeModal(id) {
     const modal = document.getElementById(id);
     if (modal) modal.classList.remove('show');
-};
+}
 
 // Save cart to localStorage
 function saveCartToStorage() {
@@ -422,37 +431,38 @@ function loadCartFromStorage() {
     if (saved) {
         try {
             cart = JSON.parse(saved);
-            updateCartUI();
         } catch (e) {
             cart = [];
         }
     }
 }
 
-// Setup event listeners
-function setupEventListeners() {
-    // Category filter
-    document.querySelectorAll('.category-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
-            const category = this.dataset.category;
-            currentCategory = category;
-            loadMenuItems(category);
-        });
-    });
-    
-    // Checkout form
-    const form = document.getElementById('checkoutForm');
-    if (form) form.addEventListener('submit', placeOrder);
-    
-    // Close modal on overlay click
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.remove('show');
-            }
-        });
-    });
-}
+// Make functions globally accessible
+window.addToCart = addToCart;
+window.updateQuantity = updateQuantity;
+window.toggleCart = toggleCart;
+window.proceedToCheckout = proceedToCheckout;
+window.getCurrentLocation = getCurrentLocation;
+window.placeOrder = placeOrder;
+window.closeModal = closeModal;
+window.showMenu = showMenu;
+window.filterCategory = filterCategory;
+window.loadMenuItems = loadMenuItems;
+
+// Add toast styles if not already present
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+    @keyframes slideDown {
+        from {
+            transform: translateX(-50%) translateY(-100px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    }
+`;
+document.head.appendChild(styleSheet);
+
+console.log('🍽️ Chikorlando Restaurant App Loaded Successfully!');
