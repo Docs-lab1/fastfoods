@@ -103,10 +103,35 @@
         .refresh-btn:hover {
             background: rgba(255,255,255,0.3);
         }
+        .auth-error {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .auth-error i {
+            font-size: 64px;
+            color: #f44336;
+        }
+        .auth-error h2 {
+            color: #333;
+            margin-top: 16px;
+        }
+        .auth-error p {
+            color: #666;
+            margin-top: 8px;
+        }
+        .auth-error .login-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: var(--primary-red);
+            color: white;
+            border-radius: 50px;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
-    <div class="admin-container">
+    <div class="admin-container" id="adminContainer">
         <div class="admin-header">
             <div>
                 <h1><i class="fas fa-utensils"></i> Chikorlando Admin</h1>
@@ -153,7 +178,6 @@
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
-    <script src="logout.js"></script>
     <script>
         // ============================================
         // ADMIN DASHBOARD
@@ -162,16 +186,19 @@
         // Check if user is admin
         async function checkAdminAuth() {
             try {
-                const supabase = window.supabaseClient;
-                if (!supabase) {
-                    window.location.href = 'login.html';
-                    return;
+                // Check if Supabase is available
+                if (typeof window.supabaseClient === 'undefined') {
+                    throw new Error('Supabase not initialized');
                 }
+
+                const supabase = window.supabaseClient;
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
                 
-                const { data: { user } } = await supabase.auth.getUser();
+                if (userError) throw userError;
+                
                 if (!user) {
                     window.location.href = 'login.html';
-                    return;
+                    return false;
                 }
                 
                 // Check user role
@@ -182,8 +209,10 @@
                     .single();
                     
                 if (error || !data || data.role !== 'admin') {
+                    // Not admin - redirect to login
+                    await supabase.auth.signOut();
                     window.location.href = 'login.html';
-                    return;
+                    return false;
                 }
                 
                 // Show user info
@@ -191,9 +220,20 @@
                     `👤 ${data.name || 'Admin'} • ${user.email}`;
                 
                 console.log('✅ Admin logged in:', user.email);
+                return true;
             } catch (error) {
                 console.error('Auth error:', error);
-                window.location.href = 'login.html';
+                document.getElementById('adminContainer').innerHTML = `
+                    <div class="auth-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h2>Authentication Error</h2>
+                        <p>${error.message}</p>
+                        <a href="login.html" class="login-link">
+                            <i class="fas fa-sign-in-alt"></i> Go to Login
+                        </a>
+                    </div>
+                `;
+                return false;
             }
         }
 
@@ -216,7 +256,7 @@
                 console.error('Error loading orders:', error);
                 document.getElementById('ordersList').innerHTML = `
                     <p style="text-align: center; color: #f44336; padding: 20px;">
-                        <i class="fas fa-exclamation-circle"></i> Error loading orders
+                        <i class="fas fa-exclamation-circle"></i> Error loading orders: ${error.message}
                     </p>
                 `;
             }
@@ -348,18 +388,31 @@
         }
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('🔐 Admin Dashboard Loading...');
-            checkAdminAuth();
-            loadOrders();
-            
-            // Refresh every 30 seconds
-            setInterval(loadOrders, 30000);
+            const isAuth = await checkAdminAuth();
+            if (isAuth) {
+                loadOrders();
+                // Refresh every 30 seconds
+                setInterval(loadOrders, 30000);
+            }
         });
 
         // Make functions global
         window.loadOrders = loadOrders;
         window.updateOrderStatus = updateOrderStatus;
+        window.logout = async function() {
+            try {
+                const supabase = window.supabaseClient;
+                if (supabase) {
+                    await supabase.auth.signOut();
+                }
+            } catch (e) {
+                console.error('Logout error:', e);
+            }
+            localStorage.clear();
+            window.location.href = 'login.html';
+        };
     </script>
 </body>
 </html>
