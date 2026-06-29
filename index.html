@@ -2,1138 +2,192 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Chikorlando Restaurant & Take Away</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chikorlando Restaurant</title>
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; overflow-x: hidden; }
-        .app-container { max-width: 450px; margin: 0 auto; background: #f8f9fa; min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-        .app-header { background: linear-gradient(135deg, #E85D04, #FF8C42); color: white; padding: 20px 16px; position: sticky; top: 0; z-index: 100; }
-        .app-header h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .app-header p { font-size: 0.75rem; opacity: 0.9; margin-top: 5px; }
-        .logo-img { height: 45px; width: auto; border-radius: 50%; object-fit: cover; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 450px; margin: 0 auto; background: white; display: flex; justify-content: space-around; padding: 10px 0 20px; border-top: 1px solid #eee; z-index: 100; overflow-x: auto; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; font-size: 0.65rem; color: #888; cursor: pointer; min-width: 55px; padding: 4px 8px; }
-        .nav-item i { font-size: 1.2rem; }
-        .nav-item.active { color: #E85D04; }
-        .main-content { padding: 16px; padding-bottom: 80px; }
-        .page { display: none; animation: fadeIn 0.3s ease; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .menu-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .menu-card.admin-mode { border: 2px solid #E85D04; }
-        .menu-img { width: 100%; height: 130px; object-fit: cover; background: #f0f0f0; }
-        .menu-info { padding: 10px; }
-        .menu-info h3 { font-size: 0.9rem; margin-bottom: 4px; }
-        .menu-info p { font-size: 0.7rem; color: #777; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .price { color: #E85D04; font-weight: bold; font-size: 1rem; margin-bottom: 8px; }
-        .add-btn, .edit-btn, .delete-btn { background: #E85D04; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; width: 100%; cursor: pointer; margin-top: 5px; }
-        .delete-btn { background: #ff4444; }
-        .edit-btn { background: #2196F3; }
-        .cart-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .total { font-size: 1.2rem; font-weight: bold; margin-top: 12px; text-align: right; color: #E85D04; }
-        .input-field { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; margin: 8px 0; font-size: 0.9rem; }
-        .gps-btn { background: #2196F3; color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; margin: 8px 0; font-weight: 600; cursor: pointer; }
-        .payment-option { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 12px; margin: 8px 0; cursor: pointer; }
-        .order-btn { background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-size: 1rem; font-weight: bold; margin-top: 16px; cursor: pointer; }
-        .order-btn:disabled { background: #ccc; cursor: not-allowed; }
-        .map-container { background: white; border-radius: 16px; overflow: hidden; margin: 16px 0; }
-        #customerMap, #deliveryMap { height: 280px; width: 100%; }
-        .order-card { background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px; border-left: 4px solid #E85D04; }
-        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: bold; }
-        .status-pending { background: #ff9800; color: white; }
-        .status-accepted { background: #2196F3; color: white; }
-        .status-delivering { background: #9c27b0; color: white; }
-        .status-delivered { background: #4CAF50; color: white; }
-        .delivery-boy-card { background: linear-gradient(135deg, #fff3e0, #ffe8d6); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-        .btn-primary { background: #E85D04; color: white; border: none; padding: 10px; border-radius: 12px; width: 100%; font-weight: bold; margin: 5px 0; cursor: pointer; }
-        .notification { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 20px; border-radius: 30px; font-size: 0.8rem; z-index: 1000; text-align: center; max-width: 90%; }
-        .filter-bar { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-        .filter-btn { background: #eee; border: none; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 0.7rem; }
-        .filter-btn.active { background: #E85D04; color: white; }
-        .delivery-girl-card { background: #fff3e0; border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .stat-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 12px; padding: 12px; text-align: center; margin-bottom: 10px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; border-radius: 20px; padding: 20px; max-width: 350px; width: 90%; margin: auto; }
-        .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
-        .modal-buttons button { flex: 1; padding: 10px; border-radius: 10px; border: none; cursor: pointer; }
-        .modal-buttons button:first-child { background: #4CAF50; color: white; }
-        .modal-buttons button:last-child { background: #ccc; }
-        .delivery-movement { background: #4CAF50; color: white; padding: 4px 8px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
-        .admin-badge { position: absolute; top: 5px; right: 5px; background: #E85D04; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.6rem; z-index: 1; }
-        .loading-text { text-align: center; padding: 40px 20px; color: #999; }
-        .loading-text i { font-size: 2rem; display: block; margin-bottom: 10px; }
-        .cart-count-badge { background: #FF6B00; color: white; border-radius: 50%; padding: 1px 7px; font-size: 0.6rem; margin-left: 2px; }
-        .nav-item .fa-shopping-cart { position: relative; }
-    </style>
 </head>
 <body>
-<div class="app-container">
-    <div class="app-header">
-        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <img src="images/logo.png" class="logo-img" alt="Logo" onerror="this.style.display='none'">
-            <div>
-                <h1>Chikorlando Restaurant<br>& Take Away</h1>
-                <p>📍 Kasama, Zambia • Delivering Happiness</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="main-content">
-        <!-- HOME PAGE -->
-        <div id="homePage" class="page active">
-            <div id="menuGrid" class="menu-grid">
-                <div class="loading-text">
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <div class="logo-container">
                     <i class="fas fa-utensils"></i>
-                    <p>Loading menu...</p>
+                    <h1>Chikorlando</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="cart-btn" onclick="toggleCart()">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </button>
+                    <!-- User Icon - Now Functional -->
+                    <button class="cart-btn" id="userBtn" onclick="handleUserAction()">
+                        <i class="fas fa-user" id="userIcon"></i>
+                    </button>
                 </div>
             </div>
-        </div>
-
-        <!-- CART PAGE -->
-        <div id="cartPage" class="page">
-            <div class="cart-card"><h3>🛒 Your Order</h3><div id="cartItemsList"></div><div class="total" id="cartTotal">Total: ZMW 0.00</div></div>
-            <div class="cart-card">
-                <h3>📞 Contact Details</h3>
-                <input type="tel" id="phone" class="input-field" placeholder="Phone Number (e.g., 0971234567)">
-                <textarea id="address" class="input-field" rows="2" placeholder="Delivery Address"></textarea>
-                <button class="gps-btn" onclick="getCustomerGPSLocation()"><i class="fas fa-location-dot"></i> Use My GPS Location</button>
-                <input type="text" id="landmark" class="input-field" placeholder="Landmark (Optional)">
+            <div class="header-bottom">
+                <p>Restaurant & Take away</p>
+                <small>Kasama District</small>
             </div>
-            <div class="cart-card">
-                <h3>💳 Payment Method</h3>
-                <div class="payment-option"><input type="radio" name="payment" value="cash" checked> 💵 Cash on Delivery</div>
-                <div class="payment-option"><input type="radio" name="payment" value="mobile_money"> 📱 Mobile Money (Airtel/MTN)</div>
-            </div>
-            <button class="order-btn" onclick="placeOrder()"><i class="fas fa-truck"></i> Place Order</button>
-        </div>
+        </header>
 
-        <!-- TRACK PAGE -->
-        <div id="trackPage" class="page">
-            <div class="map-container"><div id="customerMap"></div></div>
-            <div id="trackingStatus" class="cart-card"></div>
-            <div id="orderHistoryList"></div>
-        </div>
-
-        <!-- DELIVERY PAGE -->
-        <div id="deliveryPage" class="page">
-            <div id="deliveryLogin" class="cart-card" style="text-align:center">
-                <i class="fas fa-female" style="font-size: 50px; color: #E85D04;"></i>
-                <h3>Delivery Girl Login</h3>
-                <input type="text" id="deliveryName" class="input-field" placeholder="Name (e.g., Laura)">
-                <input type="password" id="deliveryPin" class="input-field" placeholder="PIN (1234 for demo)">
-                <button class="btn-primary" onclick="loginDeliveryGirl()">Login</button>
-            </div>
-            <div id="deliveryDashboard" style="display:none">
-                <div class="delivery-boy-card">
-                    <h3><i class="fas fa-female"></i> Welcome, <span id="deliveryGirlName"></span></h3>
-                    <button class="btn-primary" onclick="updateDeliveryLocation()"><i class="fas fa-satellite-dish"></i> Update My Live Location</button>
-                    <div id="deliveryLocationStatus" class="delivery-movement" style="margin-top:8px">📍 Location: Not set</div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Welcome Section -->
+            <section class="welcome-section">
+                <div class="welcome-text">
+                    <h2>Welcome to Chikorlando</h2>
+                    <p>Delicious meals delivered to your doorstep</p>
                 </div>
-                <h3>📋 Available Orders</h3>
-                <div id="availableOrdersList"></div>
-                <h3>🛵 My Active Deliveries</h3>
-                <div id="myDeliveriesList"></div>
-                <div class="map-container"><div id="deliveryMap"></div></div>
-                <div id="navPanel"></div>
-            </div>
-        </div>
+                <button class="order-now-btn" onclick="showMenu()">
+                    <i class="fas fa-utensil-spoon"></i> Order Now
+                </button>
+            </section>
 
-        <!-- ADMIN PAGE -->
-        <div id="adminPage" class="page">
-            <div id="adminLogin" class="cart-card" style="text-align:center">
-                <i class="fas fa-lock" style="font-size: 50px; color: #E85D04;"></i>
-                <h3>Admin Login</h3>
-                <input type="password" id="adminPassword" class="input-field" placeholder="Admin Password">
-                <button class="btn-primary" onclick="loginAdmin()">Login</button>
-            </div>
-            <div id="adminDashboard" style="display:none">
-                <div class="stat-card">
-                    <h3>📊 Admin Dashboard</h3>
-                    <p>Total Orders: <span id="totalOrdersCount">0</span></p>
-                    <p>Total Revenue: ZMW <span id="totalRevenue">0</span></p>
-                    <p>Menu Items: <span id="menuItemsCount">0</span></p>
-                </div>
-                
-                <div class="cart-card">
-                    <h3>🍕 Manage Menu</h3>
-                    <button class="btn-primary" onclick="showAddMenuItemModal()"><i class="fas fa-plus"></i> Add New Food Item</button>
-                    <div id="adminMenuList" style="margin-top: 15px;"></div>
-                </div>
+            <!-- Category Filter -->
+            <section class="category-filter">
+                <button class="category-btn active" data-category="all" onclick="filterCategory('all', this)">All</button>
+                <button class="category-btn" data-category="main" onclick="filterCategory('main', this)">Main Dishes</button>
+                <button class="category-btn" data-category="appetizer" onclick="filterCategory('appetizer', this)">Appetizers</button>
+                <button class="category-btn" data-category="drinks" onclick="filterCategory('drinks', this)">Drinks</button>
+                <button class="category-btn" data-category="dessert" onclick="filterCategory('dessert', this)">Desserts</button>
+            </section>
 
-                <div class="cart-card">
-                    <h3>👩‍🦱 Manage Delivery Girls</h3>
-                    <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
-                        <input type="text" id="newGirlName" class="input-field" placeholder="Name" style="flex:2">
-                        <input type="text" id="newGirlPin" class="input-field" placeholder="PIN" style="flex:1">
-                        <button class="btn-primary" onclick="addDeliveryGirl()" style="flex:1; margin:0">Add</button>
+            <!-- Menu Items -->
+            <section class="menu-section" id="menuSection">
+                <div class="menu-grid" id="menuGrid">
+                    <!-- Menu items will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Cart Sidebar -->
+            <div class="cart-sidebar" id="cartSidebar">
+                <div class="cart-header">
+                    <h3><i class="fas fa-shopping-cart"></i> Your Order</h3>
+                    <button class="close-cart" onclick="toggleCart()">×</button>
+                </div>
+                <div class="cart-items" id="cartItems">
+                    <div class="empty-cart" style="text-align: center; padding: 40px 0;">
+                        <i class="fas fa-shopping-cart" style="font-size: 48px; color: #ccc;"></i>
+                        <p style="color: #999; margin-top: 8px;">Your cart is empty</p>
                     </div>
-                    <div id="deliveryGirlsList"></div>
                 </div>
-
-                <div class="cart-card">
-                    <h3>📅 Filter Orders by Month</h3>
-                    <div class="filter-bar">
-                        <button class="filter-btn active" onclick="filterOrdersByMonth('all')">All</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(1)">Jan</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(2)">Feb</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(3)">Mar</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(4)">Apr</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(5)">May</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(6)">Jun</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(7)">Jul</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(8)">Aug</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(9)">Sep</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(10)">Oct</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(11)">Nov</button>
-                        <button class="filter-btn" onclick="filterOrdersByMonth(12)">Dec</button>
+                <div class="cart-footer">
+                    <div class="cart-total">
+                        <span>Total:</span>
+                        <span class="total-amount" id="cartTotal">K0.00</span>
                     </div>
-                    <div id="filteredOrdersList"></div>
-                </div>
-
-                <div class="cart-card">
-                    <h3>📋 All Orders</h3>
-                    <div id="allOrdersList"></div>
+                    <button class="checkout-btn" onclick="proceedToCheckout()">
+                        <i class="fas fa-credit-card"></i> Checkout
+                    </button>
                 </div>
             </div>
-        </div>
+        </main>
 
-        <!-- PROFILE PAGE -->
-        <div id="profilePage" class="page">
-            <div class="cart-card" style="text-align:center">
-                <i class="fas fa-store" style="font-size: 50px; color: #E85D04;"></i>
-                <h3>Chikorlando Restaurant</h3>
-                <p>📍 Kasama Town Center</p>
-                <p>📞 +260 97 123 4567</p>
-                <p>⏰ Mon-Sun: 8AM - 10PM</p>
-                <hr style="margin:15px 0">
-                <h4>About Us</h4>
-                <p>We serve fresh, delicious Zambian cuisine with love. Our delivery girls ensure your food arrives hot and on time!</p>
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="window.location.href='index.html'">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" onclick="window.location.href='menu.html'">
+                <i class="fas fa-utensils"></i>
+                <span>Menu</span>
+            </button>
+            <button class="nav-item" onclick="window.location.href='orders.html'">
+                <i class="fas fa-list"></i>
+                <span>Orders</span>
+            </button>
+            <button class="nav-item" onclick="window.location.href='login.html'">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Login</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Place Your Order</h3>
+                <button class="modal-close" onclick="closeModal('checkoutModal')">×</button>
             </div>
+            <form id="checkoutForm">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="customerName" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="customerPhone" placeholder="0977 123 456" required>
+                </div>
+                <div class="form-group">
+                    <label>Delivery Address *</label>
+                    <textarea id="deliveryAddress" placeholder="Enter your delivery address" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Location on Map</label>
+                    <div id="mapContainer" style="height: 200px; background: #e0e0e0; border-radius: 10px;"></div>
+                    <button type="button" class="get-location-btn" onclick="getCurrentLocation()" style="margin-top: 10px; width: 100%;">
+                        <i class="fas fa-location-dot"></i> Get Current Location
+                    </button>
+                </div>
+                <button type="submit" class="place-order-btn" onclick="placeOrder(event)">
+                    <i class="fas fa-check"></i> Place Order
+                </button>
+            </form>
         </div>
     </div>
 
-    <div class="bottom-nav">
-        <button class="nav-item active" onclick="navigateTo('home')"><i class="fas fa-home"></i><span>Home</span></button>
-        <button class="nav-item" onclick="navigateTo('cart')"><i class="fas fa-shopping-cart"></i><span>Cart</span></button>
-        <button class="nav-item" onclick="navigateTo('track')"><i class="fas fa-map-marker-alt"></i><span>Track</span></button>
-        <button class="nav-item" onclick="navigateTo('delivery')"><i class="fas fa-motorcycle"></i><span>Delivery</span></button>
-        <button class="nav-item" onclick="navigateTo('admin')"><i class="fas fa-user-shield"></i><span>Admin</span></button>
-        <button class="nav-item" onclick="navigateTo('profile')"><i class="fas fa-user"></i><span>Profile</span></button>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Loading...</p>
     </div>
-</div>
 
-<!-- Modal for Add/Edit Menu Item -->
-<div id="menuModal" class="modal">
-    <div class="modal-content">
-        <h3 id="modalTitle">Add New Food Item</h3>
-        <input type="text" id="itemName" class="input-field" placeholder="Food Name">
-        <textarea id="itemDesc" class="input-field" rows="2" placeholder="Description"></textarea>
-        <input type="number" id="itemPrice" class="input-field" placeholder="Price (ZMW)">
-        <input type="text" id="itemImage" class="input-field" placeholder="Image URL (e.g., https://i.imgur.com/xxxx.jpg)">
-        <input type="hidden" id="editItemId">
-        <div class="modal-buttons">
-            <button onclick="saveMenuItem()">Save</button>
-            <button onclick="closeModal()">Cancel</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    // ============ SUPABASE CONFIGURATION ============
-    const SUPABASE_URL = 'https://prsgpaqbokothjsqclyv.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByc2dwYXFib2tvdGhqc3FjbHl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2NjQ2NzIsImV4cCI6MjA5ODI0MDY3Mn0.9aQAYye-50gwbK0V84RS8p_nS75bfr9fkG27c6QPODY';
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
     
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // ============ APP STATE ============
-    let menu = [];
-    let cart = [];
-    let currentCustomerLocation = null;
-    let customerMap, customerMarker;
-    let deliveryMap, deliveryMarker;
-    let currentDeliveryGirl = null;
-    let currentAdmin = false;
-    let currentFilter = 'all';
-    
-    const KASAMA_CENTER = [-10.2129, 31.1809];
-    const ADMIN_PASSWORD = "admin123";
-
-    // ============ IMAGE PATH CONFIGURATION ============
-    const IMAGE_PATH = 'images/';
-    
-    // ============ HARDCODED MENU (FALLBACK) ============
-    const HARDCODED_MENU = [
-        { id: 1, name: "Nshima with Chicken", description: "Traditional nshima + grilled chicken + rape", price: 45 },
-        { id: 2, name: "Beef Burger", description: "Zambian beef patty with chips", price: 35 },
-        { id: 3, name: "Pizza Special", description: "Loaded with sausage, peppers & cheese", price: 60 },
-        { id: 4, name: "Fried Bream", description: "Fresh bream fish with nshima", price: 50 },
-        { id: 5, name: "Vegetable Rice", description: "Rice with mixed vegetables", price: 30 },
-        { id: 6, name: "Chicken Wings", description: "Spicy grilled wings + chips", price: 40 },
-        { id: 7, name: "Breakfast Roll", description: "Egg, sausage, cheese roll", price: 25 },
-        { id: 8, name: "Chibuku Shake", description: "Traditional maheu shake", price: 10 },
-        { id: 9, name: "Coca Cola", description: "Chilled soft drink", price: 12 }
-    ];
-
-    // ============ LOAD MENU ============
-    async function loadMenu() {
-        // First: Set menu to hardcoded data immediately
-        menu = HARDCODED_MENU.map(item => ({ ...item }));
-        renderMenu();
-        document.getElementById('menuItemsCount').innerHTML = menu.length;
-        
-        // Try to load from Supabase
-        try {
-            // Check if menu_items table exists
-            const { data, error } = await supabase
-                .from('menu_items')
-                .select('*')
-                .eq('available', true)
-                .limit(20);
+    <!-- User Icon Handler -->
+    <script>
+        // Handle user icon click based on login status
+        function handleUserAction() {
+            const userRole = localStorage.getItem('userRole');
             
-            if (!error && data && data.length > 0) {
-                menu = data.map((item, index) => ({
-                    id: index + 1,
-                    uuid: item.id,
-                    name: item.name,
-                    description: item.description || '',
-                    price: parseFloat(item.price),
-                    image: item.image_url || null
-                }));
-                renderMenu();
-                document.getElementById('menuItemsCount').innerHTML = menu.length;
+            if (userRole === 'admin') {
+                window.location.href = 'admin.html';
+            } else if (userRole === 'delivery') {
+                window.location.href = 'delivery.html';
+            } else if (userRole === 'customer') {
+                window.location.href = 'profile.html';
+            } else {
+                window.location.href = 'login.html';
             }
-        } catch (e) {
-            console.log('Using hardcoded menu');
         }
-        
-        if (currentAdmin) renderAdminMenu();
-    }
 
-    function getImageUrl(item) {
-        // Check if we have a specific image URL
-        if (item.image) return item.image;
-        
-        // Try to load from images folder
-        const imageName = item.name.toLowerCase().replace(/\s+/g, '-') + '.jpg';
-        return IMAGE_PATH + imageName;
-    }
-
-    // ============ RENDER FUNCTIONS ============
-    
-    function renderMenu() {
-        const container = document.getElementById('menuGrid');
-        if (!container) return;
-        
-        if (!menu || menu.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#999; padding:40px 0;">No items available</p>';
-            return;
-        }
-        
-        container.innerHTML = menu.map(item => `
-            <div class="menu-card">
-                <img src="${getImageUrl(item)}" 
-                     class="menu-img" 
-                     alt="${escapeHtml(item.name)}" 
-                     onerror="this.src='https://via.placeholder.com/400x300?text=${encodeURIComponent(item.name)}'">
-                <div class="menu-info">
-                    <h3>${escapeHtml(item.name)}</h3>
-                    <p>${escapeHtml(item.description || '')}</p>
-                    <div class="price">ZMW ${item.price}</div>
-                    <button class="add-btn" onclick="addToCart(${item.id})">+ Add to Cart</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function renderAdminMenu() {
-        const container = document.getElementById('adminMenuList');
-        if (!container || !currentAdmin) return;
-        if (!menu || menu.length === 0) {
-            container.innerHTML = '<p style="color:#999">No items in menu. Add some!</p>';
-            return;
-        }
-        container.innerHTML = menu.map(item => `
-            <div class="menu-card admin-mode" style="margin-bottom: 12px; position:relative;">
-                <div class="admin-badge">ID: ${item.id}</div>
-                <img src="${getImageUrl(item)}" 
-                     class="menu-img" 
-                     alt="${escapeHtml(item.name)}" 
-                     style="height: 100px;" 
-                     onerror="this.src='https://via.placeholder.com/400x300?text=${encodeURIComponent(item.name)}'">
-                <div class="menu-info">
-                    <h3>${escapeHtml(item.name)}</h3>
-                    <p>${escapeHtml(item.description || '')}</p>
-                    <div class="price">ZMW ${item.price}</div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="edit-btn" onclick="showEditMenuItemModal(${item.id})">✏️ Edit</button>
-                        <button class="delete-btn" onclick="deleteMenuItem(${item.id})">🗑️ Delete</button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
+        // Update user icon based on login status
+        document.addEventListener('DOMContentLoaded', function() {
+            const userRole = localStorage.getItem('userRole');
+            const userIcon = document.getElementById('userIcon');
+            const userBtn = document.getElementById('userBtn');
+            
+            if (userRole === 'admin') {
+                userIcon.className = 'fas fa-user-shield';
+                userBtn.style.background = 'rgba(255,215,0,0.3)';
+            } else if (userRole === 'delivery') {
+                userIcon.className = 'fas fa-truck';
+                userBtn.style.background = 'rgba(76, 175, 80, 0.3)';
+            } else if (userRole === 'customer') {
+                userIcon.className = 'fas fa-user-check';
+                userBtn.style.background = 'rgba(33, 150, 243, 0.3)';
+            } else {
+                userIcon.className = 'fas fa-user';
+                userBtn.style.background = 'rgba(255,255,255,0.2)';
+            }
         });
-    }
-
-    // ============ ADD TO CART ============
-    function addToCart(id) {
-        const item = menu.find(i => i.id === id);
-        if (!item) {
-            showToast('❌ Item not found');
-            return;
-        }
-        const existing = cart.find(i => i.id === id);
-        if (existing) {
-            existing.quantity++;
-        } else {
-            cart.push({ ...item, quantity: 1 });
-        }
-        renderCart();
-        showToast(`✅ ${item.name} added to cart`);
-    }
-
-    function renderCart() {
-        const container = document.getElementById('cartItemsList');
-        const totalElem = document.getElementById('cartTotal');
-        if (!container) return;
-        if (cart.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#999;">Cart is empty</p>';
-            totalElem.innerHTML = 'Total: ZMW 0.00';
-            return;
-        }
-        let total = 0;
-        container.innerHTML = cart.map(item => {
-            const itemTotal = item.price * item.quantity;
-            total += itemTotal;
-            return `
-                <div class="cart-item">
-                    <div><b>${escapeHtml(item.name)}</b> x${item.quantity}<br><small>ZMW ${item.price}</small></div>
-                    <div>ZMW ${itemTotal} <button onclick="removeFromCart(${item.id})" style="background:#ff4444; border:none; color:white; padding:4px 10px; border-radius:20px; margin-left:8px">×</button></div>
-                </div>
-            `;
-        }).join('');
-        totalElem.innerHTML = `Total: ZMW ${total.toFixed(2)}`;
-    }
-
-    function removeFromCart(id) {
-        const index = cart.findIndex(i => i.id === id);
-        if (index !== -1) {
-            if (cart[index].quantity > 1) {
-                cart[index].quantity--;
-            } else {
-                cart.splice(index, 1);
-            }
-            renderCart();
-        }
-    }
-
-    // ============ PLACE ORDER ============
-    async function placeOrder() {
-        if (cart.length === 0) {
-            showToast('❌ Cart is empty');
-            return;
-        }
-        const phone = document.getElementById('phone').value;
-        const address = document.getElementById('address').value;
-        if (!phone || phone.length < 9) {
-            showToast('❌ Enter valid phone number');
-            return;
-        }
-        if (!address) {
-            showToast('❌ Enter address or use GPS');
-            return;
-        }
-        
-        const payment = document.querySelector('input[name="payment"]:checked').value;
-        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        
-        try {
-            const orderData = {
-                customer_name: phone,
-                customer_phone: phone,
-                delivery_address: address,
-                landmark: document.getElementById('landmark').value || '',
-                items: cart,
-                total_amount: total,
-                payment_method: payment,
-                status: 'pending',
-                latitude: currentCustomerLocation?.lat || null,
-                longitude: currentCustomerLocation?.lng || null
-            };
-            
-            const { data, error } = await supabase
-                .from('orders')
-                .insert([orderData])
-                .select();
-            
-            if (error) {
-                showToast('❌ Failed to place order: ' + error.message);
-                return;
-            }
-            
-            showToast('✅ Order placed!');
-            cart = [];
-            renderCart();
-            document.getElementById('phone').value = '';
-            document.getElementById('address').value = '';
-            navigateTo('track');
-            
-            document.getElementById('trackingStatus').innerHTML = `
-                <div class="order-card">
-                    <h4>✅ Order Confirmed!</h4>
-                    <p>Order #${data?.[0]?.id?.slice(0, 8) || 'New'}</p>
-                    <p>Waiting for a delivery girl...</p>
-                </div>
-            `;
-            
-            // Reload order history
-            loadOrderHistory(phone);
-        } catch (e) {
-            showToast('❌ Error placing order: ' + e.message);
-        }
-    }
-
-    // ============ ORDER HISTORY ============
-    async function loadOrderHistory(phone) {
-        try {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('customer_phone', phone)
-                .order('created_at', { ascending: false })
-                .limit(10);
-            
-            if (error || !data || data.length === 0) {
-                document.getElementById('orderHistoryList').innerHTML = '<p style="color:#999; text-align:center">No order history</p>';
-                return;
-            }
-            
-            document.getElementById('orderHistoryList').innerHTML = data.map(order => `
-                <div class="order-card">
-                    <div><strong>Order ${order.id.slice(0, 8)}</strong> <span class="status-badge status-${order.status}">${order.status}</span></div>
-                    <div>💰 ZMW ${order.total_amount}</div>
-                    <div>📅 ${new Date(order.created_at).toLocaleString()}</div>
-                    ${order.delivery_girl_name ? `<div>👧 Delivery: ${order.delivery_girl_name}</div>` : ''}
-                </div>
-            `).join('');
-        } catch (e) {
-            console.log('Error loading order history:', e);
-        }
-    }
-
-    // ============ DELIVERY GIRL FUNCTIONS ============
-    
-    async function loadDeliveryGirls() {
-        try {
-            const { data, error } = await supabase
-                .from('delivery_girls')
-                .select('*')
-                .eq('is_active', true);
-            
-            const girls = error ? [] : data;
-            const container = document.getElementById('deliveryGirlsList');
-            if (container && currentAdmin) {
-                if (girls.length === 0) {
-                    container.innerHTML = '<p style="color:#999">No delivery girls added yet</p>';
-                } else {
-                    container.innerHTML = girls.map(girl => `
-                        <div class="delivery-girl-card">
-                            <div><strong>${escapeHtml(girl.name)}</strong> (PIN: ${girl.pin})<br><small>${girl.phone || 'No phone'}</small></div>
-                            <button class="delete-btn" onclick="deleteDeliveryGirl('${girl.id}')">Delete</button>
-                        </div>
-                    `).join('');
-                }
-            }
-        } catch (e) {
-            console.log('Error loading delivery girls:', e);
-        }
-    }
-
-    async function addDeliveryGirl() {
-        const name = document.getElementById('newGirlName').value.trim();
-        const pin = document.getElementById('newGirlPin').value.trim();
-        if (!name || !pin) {
-            showToast('❌ Enter name and PIN');
-            return;
-        }
-        try {
-            const { error } = await supabase
-                .from('delivery_girls')
-                .insert([{ name, pin, phone: '0970000000', is_active: true }]);
-            
-            if (error) {
-                showToast('❌ Failed to add delivery girl');
-                return;
-            }
-            showToast(`✅ Delivery girl ${name} added! PIN: ${pin}`);
-            document.getElementById('newGirlName').value = '';
-            document.getElementById('newGirlPin').value = '';
-            loadDeliveryGirls();
-        } catch (e) {
-            showToast('❌ Error adding delivery girl');
-        }
-    }
-
-    async function deleteDeliveryGirl(id) {
-        if (!confirm('Delete this delivery girl?')) return;
-        try {
-            const { error } = await supabase
-                .from('delivery_girls')
-                .update({ is_active: false })
-                .eq('id', id);
-            
-            if (!error) {
-                showToast('✅ Delivery girl deleted');
-                loadDeliveryGirls();
-            }
-        } catch (e) {
-            showToast('❌ Error deleting');
-        }
-    }
-
-    async function loginDeliveryGirl() {
-        const name = document.getElementById('deliveryName').value.trim();
-        const pin = document.getElementById('deliveryPin').value.trim();
-        
-        if (!name || !pin) {
-            showToast('❌ Enter name and PIN');
-            return;
-        }
-        
-        try {
-            const { data, error } = await supabase
-                .from('delivery_girls')
-                .select('*')
-                .eq('name', name)
-                .eq('pin', pin)
-                .eq('is_active', true);
-            
-            if (error || !data || data.length === 0) {
-                showToast('❌ Invalid credentials');
-                return;
-            }
-            
-            const girl = data[0];
-            currentDeliveryGirl = { name: girl.name, location: null, id: girl.id };
-            document.getElementById('deliveryLogin').style.display = 'none';
-            document.getElementById('deliveryDashboard').style.display = 'block';
-            document.getElementById('deliveryGirlName').innerText = girl.name;
-            initDeliveryMap();
-            updateDeliveryLocation();
-            loadAvailableOrders();
-            loadMyDeliveries();
-            setInterval(() => {
-                if (currentDeliveryGirl) {
-                    loadAvailableOrders();
-                    loadMyDeliveries();
-                }
-            }, 10000);
-            showToast(`✅ Welcome ${girl.name}!`);
-        } catch (e) {
-            showToast('❌ Error logging in');
-        }
-    }
-
-    // ============ ORDER FUNCTIONS ============
-    
-    async function loadAvailableOrders() {
-        try {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('status', 'pending')
-                .order('created_at', { ascending: true });
-            
-            const orders = error ? [] : data;
-            const container = document.getElementById('availableOrdersList');
-            if (container && currentDeliveryGirl) {
-                if (orders.length === 0) {
-                    container.innerHTML = '<p style="color:#999; text-align:center">No pending orders</p>';
-                } else {
-                    container.innerHTML = orders.map(order => `
-                        <div class="order-card">
-                            <div><strong>Order ${order.id.slice(0, 8)}</strong></div>
-                            <div>📍 ${(order.delivery_address || 'N/A').substring(0, 40)}...</div>
-                            <div>📞 ${order.customer_phone}</div>
-                            <div>💰 ZMW ${order.total_amount}</div>
-                            <button class="btn-primary" onclick="acceptOrder('${order.id}')">✓ Accept Delivery</button>
-                        </div>
-                    `).join('');
-                }
-            }
-        } catch (e) {
-            console.log('Error loading available orders:', e);
-        }
-    }
-
-    async function loadMyDeliveries() {
-        if (!currentDeliveryGirl) return;
-        try {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('delivery_girl_name', currentDeliveryGirl.name)
-                .in('status', ['accepted', 'delivering'])
-                .order('created_at', { ascending: false });
-            
-            const orders = error ? [] : data;
-            const container = document.getElementById('myDeliveriesList');
-            if (container) {
-                if (orders.length === 0) {
-                    container.innerHTML = '<p style="color:#999; text-align:center">No active deliveries</p>';
-                } else {
-                    container.innerHTML = orders.map(order => `
-                        <div class="order-card">
-                            <div><strong>Order ${order.id.slice(0, 8)}</strong> <span class="status-badge status-${order.status}">${order.status}</span></div>
-                            <div>📍 ${(order.delivery_address || 'N/A').substring(0, 40)}</div>
-                            <div>📞 ${order.customer_phone}</div>
-                            <div>💰 ZMW ${order.total_amount}</div>
-                            ${order.status === 'accepted' ? 
-                                `<button class="btn-primary" onclick="startDelivery('${order.id}')">🚚 Start Delivery</button>` : 
-                                order.status === 'delivering' ?
-                                `<button class="btn-primary" onclick="completeDelivery('${order.id}')">✅ Mark Delivered</button>` : ''}
-                        </div>
-                    `).join('');
-                }
-            }
-        } catch (e) {
-            console.log('Error loading my deliveries:', e);
-        }
-    }
-
-    async function acceptOrder(orderId) {
-        try {
-            const { error } = await supabase
-                .from('orders')
-                .update({ 
-                    status: 'accepted', 
-                    delivery_girl_name: currentDeliveryGirl.name,
-                    delivery_girl_id: currentDeliveryGirl.id,
-                    updated_at: new Date()
-                })
-                .eq('id', orderId);
-            
-            if (!error) {
-                showToast('✅ Order accepted!');
-                loadAvailableOrders();
-                loadMyDeliveries();
-            }
-        } catch (e) {
-            showToast('❌ Error accepting order');
-        }
-    }
-
-    async function startDelivery(orderId) {
-        try {
-            const { error } = await supabase
-                .from('orders')
-                .update({ status: 'delivering', updated_at: new Date() })
-                .eq('id', orderId);
-            
-            if (!error) {
-                showToast('🚚 Delivery started!');
-                loadMyDeliveries();
-            }
-        } catch (e) {
-            showToast('❌ Error starting delivery');
-        }
-    }
-
-    async function completeDelivery(orderId) {
-        try {
-            const { error } = await supabase
-                .from('orders')
-                .update({ status: 'delivered', updated_at: new Date() })
-                .eq('id', orderId);
-            
-            if (!error) {
-                showToast('🎉 Order delivered!');
-                loadAvailableOrders();
-                loadMyDeliveries();
-                if (currentAdmin) loadAllOrdersAdmin();
-            }
-        } catch (e) {
-            showToast('❌ Error completing delivery');
-        }
-    }
-
-    // ============ ADMIN FUNCTIONS ============
-    
-    function loginAdmin() {
-        const password = document.getElementById('adminPassword').value;
-        if (password === ADMIN_PASSWORD) {
-            currentAdmin = true;
-            document.getElementById('adminLogin').style.display = 'none';
-            document.getElementById('adminDashboard').style.display = 'block';
-            loadDeliveryGirls();
-            loadAllOrdersAdmin();
-            renderAdminMenu();
-            showToast('✅ Admin logged in!');
-        } else {
-            showToast('❌ Wrong password');
-        }
-    }
-
-    async function loadAllOrdersAdmin() {
-        try {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            const orders = error ? [] : data;
-            const total = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-            document.getElementById('totalOrdersCount').innerHTML = orders.length;
-            document.getElementById('totalRevenue').innerHTML = total.toFixed(2);
-            
-            const container = document.getElementById('allOrdersList');
-            if (container) {
-                if (orders.length === 0) {
-                    container.innerHTML = '<p style="color:#999">No orders yet</p>';
-                } else {
-                    container.innerHTML = orders.map(order => `
-                        <div class="order-card">
-                            <div><strong>Order ${order.id.slice(0, 8)}</strong> <span class="status-badge status-${order.status}">${order.status}</span></div>
-                            <div>📞 ${order.customer_phone}</div>
-                            <div>📍 ${(order.delivery_address || 'N/A').substring(0, 50)}</div>
-                            <div>💰 ZMW ${order.total_amount} | ${order.payment_method || 'Cash'}</div>
-                            <div>📅 ${new Date(order.created_at).toLocaleString()}</div>
-                            ${order.delivery_girl_name ? `<div>👧 Delivery: ${order.delivery_girl_name}</div>` : ''}
-                        </div>
-                    `).join('');
-                }
-            }
-        } catch (e) {
-            console.log('Error loading orders:', e);
-        }
-    }
-
-    async function filterOrdersByMonth(month) {
-        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        const btns = document.querySelectorAll('.filter-btn');
-        if (month !== 'all') {
-            if (btns[month]) btns[month].classList.add('active');
-        } else {
-            if (btns[0]) btns[0].classList.add('active');
-        }
-        currentFilter = month;
-        applyFilter();
-    }
-
-    async function applyFilter() {
-        try {
-            const { data } = await supabase
-                .from('orders')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            const orders = data || [];
-            let filteredOrders = [...orders];
-            const now = new Date();
-            
-            if (currentFilter !== 'all') {
-                filteredOrders = orders.filter(o => {
-                    const orderDate = new Date(o.created_at);
-                    return orderDate.getMonth() + 1 === currentFilter && orderDate.getFullYear() === now.getFullYear();
-                });
-            }
-            
-            const container = document.getElementById('filteredOrdersList');
-            if (container) {
-                if (filteredOrders.length === 0) {
-                    container.innerHTML = '<p style="color:#999">No orders for this period</p>';
-                } else {
-                    const totalFiltered = filteredOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-                    container.innerHTML = `
-                        <div class="stat-card" style="background: #4CAF50; margin-bottom: 10px;">
-                            <p>📊 Filtered Total: ${filteredOrders.length} orders</p>
-                            <p>💰 Revenue: ZMW ${totalFiltered.toFixed(2)}</p>
-                        </div>
-                        ${filteredOrders.map(order => `
-                            <div class="order-card">
-                                <div><strong>Order ${order.id.slice(0, 8)}</strong> <span class="status-badge status-${order.status}">${order.status}</span></div>
-                                <div>📞 ${order.customer_phone}</div>
-                                <div>💰 ZMW ${order.total_amount}</div>
-                                <div>📅 ${new Date(order.created_at).toLocaleDateString()}</div>
-                            </div>
-                        `).join('')}
-                    `;
-                }
-            }
-        } catch (e) {
-            console.log('Error applying filter:', e);
-        }
-    }
-
-    // ============ MODAL FUNCTIONS ============
-    function showAddMenuItemModal() {
-        document.getElementById('modalTitle').innerText = 'Add New Food Item';
-        document.getElementById('itemName').value = '';
-        document.getElementById('itemDesc').value = '';
-        document.getElementById('itemPrice').value = '';
-        document.getElementById('itemImage').value = '';
-        document.getElementById('editItemId').value = '';
-        document.getElementById('menuModal').style.display = 'flex';
-    }
-
-    function showEditMenuItemModal(id) {
-        const item = menu.find(i => i.id === id);
-        if (item) {
-            document.getElementById('modalTitle').innerText = 'Edit Food Item';
-            document.getElementById('itemName').value = item.name;
-            document.getElementById('itemDesc').value = item.description || '';
-            document.getElementById('itemPrice').value = item.price;
-            document.getElementById('itemImage').value = item.image || '';
-            document.getElementById('editItemId').value = id;
-            document.getElementById('menuModal').style.display = 'flex';
-        }
-    }
-
-    function closeModal() {
-        document.getElementById('menuModal').style.display = 'none';
-    }
-
-    async function saveMenuItem() {
-        const name = document.getElementById('itemName').value.trim();
-        const description = document.getElementById('itemDesc').value.trim();
-        const price = parseFloat(document.getElementById('itemPrice').value);
-        const image = document.getElementById('itemImage').value.trim();
-        const editId = document.getElementById('editItemId').value;
-        
-        if (!name || isNaN(price) || price <= 0) {
-            showToast('❌ Please fill valid name and price');
-            return;
-        }
-        
-        try {
-            if (editId) {
-                const item = menu.find(i => i.id === parseInt(editId));
-                if (item && item.uuid) {
-                    const { error } = await supabase
-                        .from('menu_items')
-                        .update({ name, description, price, image_url: image || null })
-                        .eq('id', item.uuid);
-                    
-                    if (!error) {
-                        await loadMenu();
-                        showToast('✅ Food item updated!');
-                    }
-                } else {
-                    // Update local only
-                    const itemIndex = menu.findIndex(i => i.id === parseInt(editId));
-                    if (itemIndex !== -1) {
-                        menu[itemIndex] = { ...menu[itemIndex], name, description, price, image };
-                        renderMenu();
-                        if (currentAdmin) renderAdminMenu();
-                        showToast('✅ Food item updated!');
-                    }
-                }
-            } else {
-                // Try Supabase first
-                const { error } = await supabase
-                    .from('menu_items')
-                    .insert([{ name, description, price, image_url: image || null, available: true }]);
-                
-                if (!error) {
-                    await loadMenu();
-                    showToast('✅ Food item added!');
-                } else {
-                    // Fallback: add locally
-                    const newId = menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1;
-                    menu.push({ id: newId, name, description, price, image });
-                    renderMenu();
-                    if (currentAdmin) renderAdminMenu();
-                    showToast('✅ Food item added locally!');
-                }
-            }
-        } catch (e) {
-            showToast('❌ Error saving item');
-        }
-        closeModal();
-    }
-
-    async function deleteMenuItem(id) {
-        if (!confirm('Delete this item?')) return;
-        try {
-            const item = menu.find(i => i.id === id);
-            if (item && item.uuid) {
-                const { error } = await supabase
-                    .from('menu_items')
-                    .update({ available: false })
-                    .eq('id', item.uuid);
-                
-                if (!error) {
-                    await loadMenu();
-                    showToast('🗑️ Item deleted');
-                }
-            } else {
-                menu = menu.filter(i => i.id !== id);
-                renderMenu();
-                if (currentAdmin) renderAdminMenu();
-                showToast('🗑️ Item deleted');
-            }
-        } catch (e) {
-            showToast('❌ Error deleting');
-        }
-    }
-
-    // ============ GPS FUNCTIONS ============
-    function getCustomerGPSLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    currentCustomerLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    document.getElementById('address').value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)} - Kasama`;
-                    if (customerMap) {
-                        customerMap.setView([pos.coords.latitude, pos.coords.longitude], 16);
-                        if (customerMarker) customerMarker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
-                    }
-                    showToast('📍 GPS location acquired!');
-                },
-                () => showToast('❌ Unable to get GPS'),
-                { enableHighAccuracy: true }
-            );
-        }
-    }
-
-    function updateDeliveryLocation() {
-        if (navigator.geolocation && currentDeliveryGirl) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    currentDeliveryGirl.location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    document.getElementById('deliveryLocationStatus').innerHTML = `📍 Live: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
-                    if (deliveryMap) {
-                        deliveryMap.setView([pos.coords.latitude, pos.coords.longitude], 15);
-                        if (deliveryMarker) deliveryMap.removeLayer(deliveryMarker);
-                        deliveryMarker = L.marker([pos.coords.latitude, pos.coords.longitude]).addTo(deliveryMap).bindPopup('Your Location').openPopup();
-                    }
-                    showToast('📍 Location updated!');
-                },
-                () => showToast('❌ Unable to get location')
-            );
-        }
-    }
-
-    // ============ MAP FUNCTIONS ============
-    function initCustomerMap() {
-        if (typeof L === 'undefined') {
-            setTimeout(initCustomerMap, 500);
-            return;
-        }
-        if (document.getElementById('customerMap')) {
-            customerMap = L.map('customerMap').setView(KASAMA_CENTER, 14);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(customerMap);
-            customerMarker = L.marker(KASAMA_CENTER, { draggable: true }).addTo(customerMap);
-            customerMarker.on('dragend', (e) => {
-                const pos = customerMarker.getLatLng();
-                currentCustomerLocation = { lat: pos.lat, lng: pos.lng };
-                document.getElementById('address').value = `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)} - Kasama`;
-            });
-        }
-    }
-
-    function initDeliveryMap() {
-        if (typeof L === 'undefined') return;
-        if (document.getElementById('deliveryMap')) {
-            deliveryMap = L.map('deliveryMap').setView(KASAMA_CENTER, 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(deliveryMap);
-            L.marker(KASAMA_CENTER).bindPopup("📍 Chikorlando Kitchen - Pickup").addTo(deliveryMap);
-        }
-    }
-
-    // ============ NAVIGATION ============
-    function navigateTo(page) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        const targetPage = document.getElementById(`${page}Page`);
-        if (targetPage) targetPage.classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        
-        const navMap = { home: 0, cart: 1, track: 2, delivery: 3, admin: 4, profile: 5 };
-        const index = navMap[page];
-        if (index !== undefined) {
-            const navItems = document.querySelectorAll('.nav-item');
-            if (navItems[index]) navItems[index].classList.add('active');
-        }
-        
-        if (page === 'track') {
-            initCustomerMap();
-            // Load order history
-            const phone = document.getElementById('phone')?.value;
-            if (phone) loadOrderHistory(phone);
-        }
-        if (page === 'delivery' && deliveryMap) setTimeout(() => deliveryMap.invalidateSize(), 100);
-        if (page === 'admin' && currentAdmin) {
-            loadAllOrdersAdmin();
-            renderAdminMenu();
-            loadDeliveryGirls();
-        }
-    }
-
-    function showToast(msg) {
-        const existing = document.querySelector('.notification');
-        if (existing) existing.remove();
-        
-        const toast = document.createElement('div');
-        toast.className = 'notification';
-        toast.innerHTML = msg;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2500);
-    }
-
-    // ============ INITIALIZE ============
-    async function init() {
-        await loadMenu();
-        initCustomerMap();
-        
-        // Auto-refresh
-        setInterval(async () => {
-            if (currentDeliveryGirl) {
-                await loadAvailableOrders();
-                await loadMyDeliveries();
-            }
-            if (currentAdmin) {
-                await loadAllOrdersAdmin();
-            }
-        }, 15000);
-    }
-
-    // Make functions globally accessible
-    window.navigateTo = navigateTo;
-    window.addToCart = addToCart;
-    window.removeFromCart = removeFromCart;
-    window.placeOrder = placeOrder;
-    window.getCustomerGPSLocation = getCustomerGPSLocation;
-    window.loginDeliveryGirl = loginDeliveryGirl;
-    window.updateDeliveryLocation = updateDeliveryLocation;
-    window.acceptOrder = acceptOrder;
-    window.startDelivery = startDelivery;
-    window.completeDelivery = completeDelivery;
-    window.loginAdmin = loginAdmin;
-    window.addDeliveryGirl = addDeliveryGirl;
-    window.deleteDeliveryGirl = deleteDeliveryGirl;
-    window.showAddMenuItemModal = showAddMenuItemModal;
-    window.showEditMenuItemModal = showEditMenuItemModal;
-    window.deleteMenuItem = deleteMenuItem;
-    window.saveMenuItem = saveMenuItem;
-    window.closeModal = closeModal;
-    window.filterOrdersByMonth = filterOrdersByMonth;
-
-    init();
-</script>
+    </script>
 </body>
 </html>
