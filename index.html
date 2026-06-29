@@ -2,137 +2,635 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chikorlando Restaurant</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Chikorlando Restaurant - Kasama</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #B71C1C 0%, #D32F2F 50%, #E53935 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #B71C1C, #D32F2F);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        header .logo h1 {
+            font-size: 2em;
+            margin-bottom: 2px;
+        }
+
+        header .logo h1 i {
+            color: #FFD700;
+        }
+
+        header .logo .subtitle {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .header-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .cart-badge {
+            background: #FFD700;
+            color: #B71C1C;
+            border-radius: 50%;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 4px;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Menu Section */
+        .menu-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .menu-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-filter {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .category-btn {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 50px;
+            background: white;
+            color: #666;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .category-btn.active {
+            background: #D32F2F;
+            color: white;
+        }
+
+        .category-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 480px) {
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .menu-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+
+        .menu-item .item-image {
+            width: 100%;
+            height: 120px;
+            border-radius: 8px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .menu-item .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .menu-item .item-info h4 {
+            color: #333;
+            font-size: 15px;
+            margin-bottom: 3px;
+        }
+
+        .menu-item .item-info p {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .menu-item .item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .menu-item .price {
+            color: #D32F2F;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .add-btn {
+            background: #D32F2F;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #B71C1C;
+        }
+
+        /* Cart Section */
+        .cart-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 15px;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .cart-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cart-items {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item .item-name {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .cart-item .item-price {
+            color: #D32F2F;
+            font-weight: 600;
+        }
+
+        .cart-item .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cart-item .qty-btn {
+            background: #D32F2F;
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-item .qty-btn:hover {
+            background: #B71C1C;
+        }
+
+        .cart-item .qty-display {
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .cart-empty {
+            text-align: center;
+            color: #999;
+            padding: 30px 0;
+        }
+
+        .cart-empty i {
+            font-size: 48px;
+            color: #ddd;
+            margin-bottom: 10px;
+        }
+
+        .total {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin: 15px 0;
+            padding-top: 15px;
+            border-top: 2px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .total .total-amount {
+            color: #D32F2F;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #B71C1C, #D32F2F);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .checkout-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
+        }
+
+        .checkout-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Map Container */
+        .map-container {
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 15px;
+            margin: 0 20px 20px 20px;
+        }
+
+        .map-container h3 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .location-input {
+            margin-bottom: 15px;
+        }
+
+        .location-input label {
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .location-input input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            margin-top: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .location-input input:focus {
+            border-color: #D32F2F;
+            outline: none;
+        }
+
+        .location-input .get-location-btn {
+            margin-top: 8px;
+            background: #D32F2F;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.3s;
+        }
+
+        .location-input .get-location-btn:hover {
+            background: #B71C1C;
+        }
+
+        #map {
+            height: 300px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        /* Delivery Status */
+        .delivery-status {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .delivery-status.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .delivery-status h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+
+        .delivery-status p {
+            color: #555;
+            font-size: 14px;
+            margin: 4px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background: #ddd;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+            height: 30px;
+            position: relative;
+        }
+
+        .progress-fill {
+            width: 0%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            height: 100%;
+            transition: width 0.5s;
+            line-height: 30px;
+            color: white;
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            max-width: 90%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s ease;
+        }
+
+        .toast.success { background: #4CAF50; }
+        .toast.error { background: #f44336; }
+        .toast.info { background: #2196F3; }
+
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        /* Loading */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-overlay p {
+            color: white;
+            font-size: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            .map-container {
+                margin: 0 10px 10px 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
+    <div class="container">
         <!-- Header -->
-        <header class="header">
-            <div class="header-top">
-                <div class="logo-container">
-                    <i class="fas fa-utensils"></i>
-                    <h1>Chikorlando</h1>
-                </div>
-                <div class="header-actions">
-                    <button class="cart-btn" onclick="toggleCart()">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-count" id="cartCount">0</span>
-                    </button>
-                    <button class="cart-btn" id="userBtn" onclick="handleUserAction()">
-                        <i class="fas fa-user" id="userIcon"></i>
-                    </button>
-                </div>
+        <header>
+            <div class="logo">
+                <h1><i class="fas fa-utensils"></i> Chikorlando</h1>
+                <div class="subtitle">Restaurant & Take Away • Kasama District</div>
             </div>
-            <div class="header-bottom">
-                <p>Restaurant & Take away</p>
-                <small>Kasama District</small>
+            <div class="header-actions">
+                <button class="header-btn" onclick="window.location.href='login.html'">
+                    <i class="fas fa-user"></i> Login
+                </button>
+                <button class="header-btn" onclick="toggleCart()" style="background: rgba(255,215,0,0.2);">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                </button>
             </div>
         </header>
 
         <!-- Main Content -->
-        <main class="main-content">
-            <!-- Welcome Section -->
-            <section class="welcome-section">
-                <div class="welcome-text">
-                    <h2>Welcome to Chikorlando</h2>
-                    <p>Delicious meals delivered to your doorstep</p>
+        <div class="main-content">
+            <!-- Menu Section -->
+            <div class="menu-section">
+                <h2><i class="fas fa-list" style="color: #D32F2F;"></i> Our Menu</h2>
+                <div class="category-filter">
+                    <button class="category-btn active" data-category="all" onclick="filterCategory('all', this)">All</button>
+                    <button class="category-btn" data-category="main" onclick="filterCategory('main', this)">Main Dishes</button>
+                    <button class="category-btn" data-category="appetizer" onclick="filterCategory('appetizer', this)">Appetizers</button>
+                    <button class="category-btn" data-category="drinks" onclick="filterCategory('drinks', this)">Drinks</button>
+                    <button class="category-btn" data-category="dessert" onclick="filterCategory('dessert', this)">Desserts</button>
                 </div>
-                <button class="order-now-btn" onclick="showMenu()">
-                    <i class="fas fa-utensil-spoon"></i> Order Now
-                </button>
-            </section>
-
-            <!-- Category Filter -->
-            <section class="category-filter">
-                <button class="category-btn active" data-category="all" onclick="filterCategory('all', this)">All</button>
-                <button class="category-btn" data-category="main" onclick="filterCategory('main', this)">Main Dishes</button>
-                <button class="category-btn" data-category="appetizer" onclick="filterCategory('appetizer', this)">Appetizers</button>
-                <button class="category-btn" data-category="drinks" onclick="filterCategory('drinks', this)">Drinks</button>
-                <button class="category-btn" data-category="dessert" onclick="filterCategory('dessert', this)">Desserts</button>
-            </section>
-
-            <!-- Menu Items -->
-            <section class="menu-section" id="menuSection">
                 <div class="menu-grid" id="menuGrid">
-                    <!-- Menu items will be loaded here -->
+                    <!-- Menu items loaded here -->
                 </div>
-            </section>
+            </div>
 
-            <!-- Cart Sidebar -->
-            <div class="cart-sidebar" id="cartSidebar">
-                <div class="cart-header">
-                    <h3><i class="fas fa-shopping-cart"></i> Your Order</h3>
-                    <button class="close-cart" onclick="toggleCart()">×</button>
-                </div>
+            <!-- Cart Section -->
+            <div class="cart-section">
+                <h2><i class="fas fa-shopping-cart" style="color: #D32F2F;"></i> Your Order</h2>
                 <div class="cart-items" id="cartItems">
-                    <div class="empty-cart" style="text-align: center; padding: 40px 0;">
-                        <i class="fas fa-shopping-cart" style="font-size: 48px; color: #ccc;"></i>
-                        <p style="color: #999; margin-top: 8px;">Your cart is empty</p>
+                    <div class="cart-empty">
+                        <i class="fas fa-shopping-cart"></i>
+                        <p>Your cart is empty</p>
+                        <p style="font-size: 12px; margin-top: 4px;">Add items from our menu</p>
                     </div>
                 </div>
-                <div class="cart-footer">
-                    <div class="cart-total">
-                        <span>Total:</span>
-                        <span class="total-amount" id="cartTotal">K0.00</span>
-                    </div>
-                    <button class="checkout-btn" onclick="proceedToCheckout()">
-                        <i class="fas fa-credit-card"></i> Checkout
-                    </button>
+                <div class="total">
+                    <span>Total:</span>
+                    <span class="total-amount" id="cartTotal">K0.00</span>
                 </div>
-            </div>
-        </main>
-
-        <!-- Bottom Navigation - Orders REMOVED -->
-        <nav class="bottom-nav">
-            <button class="nav-item active" onclick="window.location.href='index.html'">
-                <i class="fas fa-home"></i>
-                <span>Home</span>
-            </button>
-            <button class="nav-item" onclick="window.location.href='menu.html'">
-                <i class="fas fa-utensils"></i>
-                <span>Menu</span>
-            </button>
-            <button class="nav-item" onclick="window.location.href='login.html'">
-                <i class="fas fa-sign-in-alt"></i>
-                <span>Login</span>
-            </button>
-        </nav>
-    </div>
-
-    <!-- Checkout Modal -->
-    <div class="modal" id="checkoutModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Place Your Order</h3>
-                <button class="modal-close" onclick="closeModal('checkoutModal')">×</button>
-            </div>
-            <form id="checkoutForm">
-                <div class="form-group">
-                    <label>Full Name *</label>
-                    <input type="text" id="customerName" placeholder="Enter your full name" required>
-                </div>
-                <div class="form-group">
-                    <label>Phone Number *</label>
-                    <input type="tel" id="customerPhone" placeholder="0977 123 456" required>
-                </div>
-                <div class="form-group">
-                    <label>Delivery Address *</label>
-                    <textarea id="deliveryAddress" placeholder="Enter your delivery address" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Location on Map</label>
-                    <div id="mapContainer" style="height: 200px; background: #e0e0e0; border-radius: 10px;"></div>
-                    <button type="button" class="get-location-btn" onclick="getCurrentLocation()" style="margin-top: 10px; width: 100%;">
-                        <i class="fas fa-location-dot"></i> Get Current Location
-                    </button>
-                </div>
-                <button type="submit" class="place-order-btn" onclick="placeOrder(event)">
-                    <i class="fas fa-check"></i> Place Order
+                <button class="checkout-btn" onclick="proceedToCheckout()">
+                    <i class="fas fa-credit-card"></i> Proceed to Checkout
                 </button>
-            </form>
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div class="map-container">
+            <h3><i class="fas fa-map-marker-alt" style="color: #D32F2F;"></i> Delivery Location</h3>
+            <div class="location-input">
+                <label>Your Address in Kasama:</label>
+                <input type="text" id="deliveryAddress" placeholder="e.g., Chambeshi Street, near Shoprite, Kasama" value="Shoprite Kasama">
+                <button class="get-location-btn" onclick="getCurrentLocation()">
+                    <i class="fas fa-location-dot"></i> Get My Current Location
+                </button>
+            </div>
+            <div id="map"></div>
+            <div id="deliveryStatus" class="delivery-status"></div>
         </div>
     </div>
 
@@ -144,6 +642,497 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
-    <script src="script.js"></script>
+    <script>
+        // ============================================
+        // CHIKORLANDO - MAIN SCRIPT
+        // ============================================
+
+        let cart = [];
+        let map = null;
+        let marker = null;
+        let userLocation = null;
+        let deliveryInterval = null;
+
+        // Image path
+        const IMAGE_PATH = 'images/';
+
+        // Menu emoji fallback
+        const emojiMap = {
+            'Grilled Chicken': '🍗',
+            'Beef Stew': '🥩',
+            'Fish Fry': '🐟',
+            'Vegetable Pasta': '🍝',
+            'Spring Rolls': '🌯',
+            'Samosa': '🥟',
+            'Garlic Bread': '🍞',
+            'Fresh Juice': '🧃',
+            'Soda': '🥤',
+            'Milkshake': '🥛',
+            'Chocolate Cake': '🍰',
+            'Ice Cream': '🍦'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCartFromStorage();
+            updateCartUI();
+            loadMenuItems();
+            initMap();
+            updateUserIcon();
+        });
+
+        // ============================================
+        // MENU FUNCTIONS
+        // ============================================
+
+        async function loadMenuItems(category = 'all') {
+            try {
+                showLoading(true);
+                const supabase = window.supabaseClient;
+                
+                if (!supabase) {
+                    displaySampleMenu(category);
+                    return;
+                }
+                
+                let query = supabase
+                    .from('menu_items')
+                    .select('*')
+                    .eq('available', true);
+
+                if (category !== 'all') {
+                    query = query.eq('category', category);
+                }
+
+                const { data, error } = await query.order('name');
+                
+                if (error) throw error;
+                
+                displayMenuItems(data || []);
+            } catch (error) {
+                console.error('Error loading menu:', error);
+                displaySampleMenu(category);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displaySampleMenu(category) {
+            const sampleItems = [
+                { id: 1, name: 'Grilled Chicken', description: 'Juicy grilled chicken with special sauce', price: 150, category: 'main' },
+                { id: 2, name: 'Beef Stew', description: 'Tender beef with vegetables in rich gravy', price: 180, category: 'main' },
+                { id: 3, name: 'Fish Fry', description: 'Crispy fried fish with chips', price: 120, category: 'main' },
+                { id: 4, name: 'Vegetable Pasta', description: 'Fresh pasta with seasonal vegetables', price: 100, category: 'main' },
+                { id: 5, name: 'Spring Rolls', description: 'Crispy vegetable spring rolls', price: 60, category: 'appetizer' },
+                { id: 6, name: 'Samosa', description: 'Spiced potato filling in crispy pastry', price: 40, category: 'appetizer' },
+                { id: 7, name: 'Garlic Bread', description: 'Toasted bread with garlic butter', price: 35, category: 'appetizer' },
+                { id: 8, name: 'Fresh Juice', description: 'Seasonal fresh fruit juice', price: 35, category: 'drinks' },
+                { id: 9, name: 'Soda', description: 'Assorted soda flavors', price: 25, category: 'drinks' },
+                { id: 10, name: 'Milkshake', description: 'Creamy milkshake with your choice of flavor', price: 45, category: 'drinks' },
+                { id: 11, name: 'Chocolate Cake', description: 'Rich chocolate cake with ganache', price: 50, category: 'dessert' },
+                { id: 12, name: 'Ice Cream', description: 'Vanilla ice cream with chocolate sauce', price: 40, category: 'dessert' }
+            ];
+            
+            const filtered = category === 'all' ? sampleItems : sampleItems.filter(item => item.category === category);
+            displayMenuItems(filtered);
+        }
+
+        function displayMenuItems(items) {
+            const grid = document.getElementById('menuGrid');
+            if (!grid) return;
+            
+            if (!items || items.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
+                        <i class="fas fa-utensils" style="font-size: 48px; color: #ddd;"></i>
+                        <p style="margin-top: 10px;">No items available</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = items.map(item => {
+                const emoji = emojiMap[item.name] || '🍽️';
+                const imageName = item.name.toLowerCase().replace(/\s+/g, '-') + '.jpg';
+                
+                return `
+                    <div class="menu-item">
+                        <div class="item-image">
+                            <img src="${IMAGE_PATH}${imageName}" 
+                                 alt="${item.name}" 
+                                 onerror="this.parentElement.innerHTML='<span>${emoji}</span>'">
+                        </div>
+                        <div class="item-info">
+                            <h4>${item.name}</h4>
+                            <p>${item.description || 'Delicious meal'}</p>
+                            <div class="item-footer">
+                                <span class="price">K${parseFloat(item.price).toFixed(2)}</span>
+                                <button class="add-btn" onclick="addToCart('${item.id}', '${item.name}', ${parseFloat(item.price)})">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterCategory(category, btn) {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            loadMenuItems(category);
+        }
+
+        // ============================================
+        // CART FUNCTIONS
+        // ============================================
+
+        function addToCart(id, name, price) {
+            const existing = cart.find(item => item.id === id);
+            
+            if (existing) {
+                existing.quantity += 1;
+            } else {
+                cart.push({ id, name, price, quantity: 1 });
+            }
+            
+            updateCartUI();
+            saveCartToStorage();
+            showToast(`${name} added to cart! 🛒`, 'success');
+        }
+
+        function updateCartUI() {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const badge = document.getElementById('cartBadge');
+            if (badge) badge.textContent = count;
+            
+            const container = document.getElementById('cartItems');
+            const totalEl = document.getElementById('cartTotal');
+            
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="cart-empty">
+                        <i class="fas fa-shopping-cart"></i>
+                        <p>Your cart is empty</p>
+                        <p style="font-size: 12px; margin-top: 4px;">Add items from our menu</p>
+                    </div>
+                `;
+                if (totalEl) totalEl.textContent = 'K0.00';
+                return;
+            }
+            
+            container.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-price">K${(item.price * item.quantity).toFixed(2)}</div>
+                    </div>
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="updateQuantity('${item.id}', -1)">−</button>
+                        <span class="qty-display">${item.quantity}</span>
+                        <button class="qty-btn" onclick="updateQuantity('${item.id}', 1)">+</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            if (totalEl) totalEl.textContent = `K${total.toFixed(2)}`;
+        }
+
+        function updateQuantity(id, change) {
+            const item = cart.find(i => i.id === id);
+            if (!item) return;
+            
+            item.quantity += change;
+            
+            if (item.quantity <= 0) {
+                cart = cart.filter(i => i.id !== id);
+            }
+            
+            updateCartUI();
+            saveCartToStorage();
+        }
+
+        function toggleCart() {
+            // Scroll to cart section
+            document.querySelector('.cart-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function proceedToCheckout() {
+            if (cart.length === 0) {
+                showToast('Your cart is empty!', 'error');
+                return;
+            }
+            
+            const address = document.getElementById('deliveryAddress').value;
+            if (!address || address.trim() === '') {
+                showToast('Please enter your delivery address', 'error');
+                return;
+            }
+            
+            // Show order summary
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const orderSummary = cart.map(item => `${item.name} x${item.quantity}`).join('\n');
+            
+            const confirmOrder = confirm(
+                `📋 Order Summary:\n${orderSummary}\n\n💰 Total: K${total.toFixed(2)}\n📍 Address: ${address}\n\nProceed with order?`
+            );
+            
+            if (confirmOrder) {
+                placeOrder();
+            }
+        }
+
+        // ============================================
+        // ORDER FUNCTIONS
+        // ============================================
+
+        async function placeOrder() {
+            const name = prompt('Enter your full name:');
+            if (!name) return;
+            
+            const phone = prompt('Enter your phone number:');
+            if (!phone) return;
+            
+            const address = document.getElementById('deliveryAddress').value;
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            try {
+                showLoading(true);
+                const supabase = window.supabaseClient;
+                
+                if (!supabase) {
+                    // Fallback - simulate order
+                    simulateDelivery(address);
+                    return;
+                }
+                
+                const orderData = {
+                    customer_name: name,
+                    customer_phone: phone,
+                    delivery_address: address,
+                    latitude: userLocation?.lat || null,
+                    longitude: userLocation?.lng || null,
+                    items: cart.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.price
+                    })),
+                    total_amount: total,
+                    status: 'pending'
+                };
+                
+                const { data, error } = await supabase
+                    .from('orders')
+                    .insert([orderData])
+                    .select();
+                    
+                if (error) throw error;
+                
+                localStorage.setItem('customerName', name);
+                showToast('Order placed successfully! 🎉', 'success');
+                
+                cart = [];
+                updateCartUI();
+                saveCartToStorage();
+                
+                simulateDelivery(address);
+                
+            } catch (error) {
+                console.error('Error placing order:', error);
+                showToast('Error placing order. Please try again.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function simulateDelivery(address) {
+            const statusDiv = document.getElementById('deliveryStatus');
+            const checkoutBtn = document.querySelector('.checkout-btn');
+            
+            statusDiv.className = 'delivery-status active';
+            statusDiv.innerHTML = `
+                <h4>🚚 Delivery Tracking</h4>
+                <p><strong>Status:</strong> Order confirmed!</p>
+                <p><strong>Delivery Boy:</strong> John Banda (📞 +260 97 123 4567)</p>
+                <p><strong>Your Location:</strong> ${address}</p>
+                <p id="trackingMsg">📍 Delivery boy is picking up your order...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill">0%</div>
+                </div>
+            `;
+            
+            checkoutBtn.disabled = true;
+            checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Order in progress...';
+            
+            let progress = 0;
+            deliveryInterval = setInterval(() => {
+                progress += 10;
+                const fill = document.getElementById('progressFill');
+                const msg = document.getElementById('trackingMsg');
+                
+                if (fill) {
+                    fill.style.width = progress + '%';
+                    fill.textContent = progress + '%';
+                }
+                
+                if (progress === 30) {
+                    msg.textContent = '🚶 Delivery boy is en route to your location...';
+                } else if (progress === 60) {
+                    msg.textContent = '🚲 Almost there! Delivery boy is near your area...';
+                } else if (progress === 90) {
+                    msg.textContent = '🔔 Delivery boy is at your doorstep!';
+                } else if (progress >= 100) {
+                    clearInterval(deliveryInterval);
+                    msg.textContent = '✅ Delivered! Thank you for ordering from Chikorlando!';
+                    if (fill) fill.style.background = '#4CAF50';
+                    
+                    // Open Google Maps
+                    const encodedAddress = encodeURIComponent(address + ', Kasama, Zambia');
+                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+                    
+                    setTimeout(() => {
+                        showToast('🎉 Your food has been delivered! Enjoy your meal!', 'success');
+                        resetOrder();
+                    }, 3000);
+                }
+            }, 1500);
+        }
+
+        function resetOrder() {
+            const statusDiv = document.getElementById('deliveryStatus');
+            const checkoutBtn = document.querySelector('.checkout-btn');
+            
+            checkoutBtn.disabled = false;
+            checkoutBtn.innerHTML = '<i class="fas fa-credit-card"></i> Proceed to Checkout';
+            
+            setTimeout(() => {
+                statusDiv.className = 'delivery-status';
+            }, 5000);
+        }
+
+        // ============================================
+        // MAP FUNCTIONS
+        // ============================================
+
+        function initMap() {
+            const kasamaCenter = [-10.2129, 31.1809];
+            
+            map = L.map('map').setView(kasamaCenter, 14);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            marker = L.marker(kasamaCenter, { draggable: true }).addTo(map);
+            marker.bindPopup("📍 Your delivery location");
+            
+            marker.on('dragend', function(e) {
+                const pos = marker.getLatLng();
+                userLocation = { lat: pos.lat, lng: pos.lng };
+                document.getElementById('deliveryAddress').value = 
+                    `Lat: ${pos.lat.toFixed(4)}, Lng: ${pos.lng.toFixed(4)} - Kasama`;
+            });
+            
+            map.on('click', function(e) {
+                const pos = e.latlng;
+                marker.setLatLng(pos);
+                userLocation = { lat: pos.lat, lng: pos.lng };
+                document.getElementById('deliveryAddress').value = 
+                    `Lat: ${pos.lat.toFixed(4)}, Lng: ${pos.lng.toFixed(4)} - Kasama`;
+            });
+        }
+
+        function getCurrentLocation() {
+            if (!navigator.geolocation) {
+                showToast('Geolocation is not supported', 'error');
+                return;
+            }
+            
+            showToast('Getting your location...', 'info');
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const { latitude, longitude } = position.coords;
+                    userLocation = { lat: latitude, lng: longitude };
+                    
+                    if (map && marker) {
+                        const pos = { lat: latitude, lng: longitude };
+                        map.setView(pos, 16);
+                        marker.setLatLng(pos);
+                        document.getElementById('deliveryAddress').value = 
+                            `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)} - Kasama`;
+                    }
+                    
+                    showToast('Location updated! 📍', 'success');
+                },
+                function(error) {
+                    console.error('Geolocation error:', error);
+                    showToast('Error getting location. Please enter address manually.', 'error');
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+
+        function showToast(message, type = 'info') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (!overlay) return;
+            if (show) {
+                overlay.classList.add('show');
+            } else {
+                overlay.classList.remove('show');
+            }
+        }
+
+        function saveCartToStorage() {
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+
+        function loadCartFromStorage() {
+            const saved = localStorage.getItem('cart');
+            if (saved) {
+                try {
+                    cart = JSON.parse(saved);
+                } catch (e) {
+                    cart = [];
+                }
+            }
+        }
+
+        function updateUserIcon() {
+            const userRole = localStorage.getItem('userRole');
+            // Update header button if needed
+        }
+
+        // Make functions global
+        window.addToCart = addToCart;
+        window.updateQuantity = updateQuantity;
+        window.toggleCart = toggleCart;
+        window.proceedToCheckout = proceedToCheckout;
+        window.getCurrentLocation = getCurrentLocation;
+        window.filterCategory = filterCategory;
+        window.loadMenuItems = loadMenuItems;
+    </script>
 </body>
 </html>
